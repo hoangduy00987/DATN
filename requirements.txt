@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+requests
+python-dotenv
+chromadb
+pydantic
+fastapi[all]
+Pillow>=10.0.0
+tensorflow

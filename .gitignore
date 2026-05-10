@@ -1,0 +1,22 @@
+.env
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.vscode/
+.idea/
+
+# Large model files
+app/models/*.h5
+app/models/*.pth
+app/models/*.bin
+app/models/densenet121_chest_xray_step-1-v3.h5
+
+# Data
+data/chroma_db/
+
+# Frontend
+frontend-nextjs/.next/
+frontend-nextjs/node_modules/
+frontend-nextjs/.env
+frontend-nextjs/out/
