@@ -14,6 +14,54 @@ type ChatMessage = {
   } | null;
 };
 
+function MarkdownText({ text }: { text: string }) {
+  // Simple regex-based markdown parser for bold and bullet points
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+  let listItems: React.ReactNode[] = [];
+
+  const parseLine = (line: string, key: string | number) => {
+    // Handle bold: **text**
+    const parts = line.split(/(\*\*.*?\*\*)/g);
+    return (
+      <span key={key}>
+        {parts.map((part, i) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return <strong key={i}>{part.slice(2, -2)}</strong>;
+          }
+          return part;
+        })}
+      </span>
+    );
+  };
+
+  lines.forEach((line, index) => {
+    const trimmedLine = line.trim();
+    
+    // Simple bullet point check: start with * or -
+    if (trimmedLine.startsWith("* ") || trimmedLine.startsWith("- ")) {
+      listItems.push(<li key={`li-${index}`}>{parseLine(trimmedLine.slice(2), index)}</li>);
+    } else {
+      // If we were building a list, push it now
+      if (listItems.length > 0) {
+        elements.push(<ul key={`ul-${index}`}>{listItems}</ul>);
+        listItems = [];
+      }
+      
+      if (trimmedLine) {
+        elements.push(<p key={`p-${index}`}>{parseLine(trimmedLine, index)}</p>);
+      }
+    }
+  });
+
+  // Push final list if any
+  if (listItems.length > 0) {
+    elements.push(<ul key="ul-final">{listItems}</ul>);
+  }
+
+  return <div className="markdown-content">{elements}</div>;
+}
+
 export default function HomePage() {
   const [query, setQuery] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -22,7 +70,7 @@ export default function HomePage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "bot",
-      text: "Xin chào, tôi có thể giúp gì cho bạn về các bệnh lý phổi?",
+      text: "Xin chào, tôi là AI LungCare. Tôi có thể giúp gì cho bạn về các bệnh lý phổi?",
     },
   ]);
   const STORAGE_KEY = "chat_messages_v1";
@@ -190,7 +238,7 @@ export default function HomePage() {
                 <img src={message.imageUrl} alt="upload" style={{ width: 224, height: 224, objectFit: "cover", borderRadius: 12 }} />
               </div>
             )}
-            <div>{message.text}</div>
+            <MarkdownText text={message.text} />
           </div>
         ))}
         {loading && <div className="message bot">Đang suy nghĩ...</div>}
