@@ -1,7 +1,13 @@
 import tensorflow as tf
 import os
 
-model_path = r"d:\Code\DATN\fastapi-rag-chatbot\app\models\check-xray-model.h5"
+# Use relative path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+# Navigate up to the root (app/brain/ID/scratch -> app/brain/ID -> app/brain -> app -> root)
+# Actually, easier to just use the project root if we know where it is, 
+# but let's just use the relative path to the models folder from the root.
+project_root = os.path.abspath(os.path.join(current_dir, "..", "..", "..", ".."))
+model_path = os.path.join(project_root, "app", "models", "check-xray-model.h5")
 if os.path.exists(model_path):
     try:
         model = tf.keras.models.load_model(model_path, compile=False)
