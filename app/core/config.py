@@ -12,6 +12,7 @@ class Config:
     GEN_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     # Detection model configuration (leave empty; user will provide path later)
     DETECTION_MODEL_PATH = os.getenv("DETECTION_MODEL_PATH", "")
+    XRAY_CHECK_MODEL_PATH = os.getenv("XRAY_CHECK_MODEL_PATH", "")
     DETECTION_CONFIDENCE_THRESHOLD = float(os.getenv("DETECTION_CONFIDENCE_THRESHOLD", "0.5"))
 
 

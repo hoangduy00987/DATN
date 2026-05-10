@@ -4,7 +4,7 @@ from app.models.chat_response import ChatResponse
 from app.services.retrieval_service import retrieve
 from app.services.generation_service import generate_answer
 from app.db.chroma_client import load_db
-from app.services.detection_service import DetectionModel
+from app.services.detection_service import DetectionModel, XRayCheckModel
 from PIL import Image
 import io
 
@@ -135,6 +135,8 @@ async def chat_with_image(file: UploadFile = File(None), image_base64: str = For
 
     try:
         detector = DetectionModel()
+        xray_checker = XRayCheckModel()
+        
         if file is not None:
             content = await file.read()
             image = Image.open(io.BytesIO(content))
@@ -144,7 +146,18 @@ async def chat_with_image(file: UploadFile = File(None), image_base64: str = For
             content = base64.b64decode(data)
             image = Image.open(io.BytesIO(content))
 
+        # 1. Check if image is an X-ray
+        is_xray, xray_score = xray_checker.is_xray(image)
+        if not is_xray:
+            raise HTTPException(
+                status_code=400, 
+                detail="Vui lòng đưa ảnh x-ray bệnh phổi lên để nhận diện."
+            )
+
+        # 2. Proceed with disease detection
         label, score = detector.predict(image)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Detection failed: {e}")
 
