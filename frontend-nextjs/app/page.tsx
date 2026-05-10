@@ -141,7 +141,7 @@ export default function HomePage() {
         setMessages((prev) => [...prev, { role: "bot", text: answerText, meta }]);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Đã có lỗi xảy ra.";
-        setMessages((prev) => [...prev, { role: "bot", text: `Lỗi: ${errorMessage}` }]);
+        setMessages((prev) => [...prev, { role: "bot", text: errorMessage }]);
       } finally {
         setLoading(false);
         removeFile();
@@ -169,7 +169,7 @@ export default function HomePage() {
       setMessages((prev) => [...prev, { role: "bot", text: answer }]);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Đã có lỗi xảy ra.";
-      setMessages((prev) => [...prev, { role: "bot", text: `Lỗi: ${errorMessage}` }]);
+      setMessages((prev) => [...prev, { role: "bot", text: errorMessage }]);
     } finally {
       setLoading(false);
       removeFile();

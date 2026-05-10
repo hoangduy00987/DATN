@@ -144,19 +144,41 @@ class XRayCheckModel(BaseModel):
     def is_xray(self, image) -> Tuple[bool, float]:
         """Returns (is_xray, confidence)."""
         if Image is None or np is None:
-            return True, 1.0 # Default to true if no model to avoid blocking
+            logging.error("Image or Numpy not available for X-ray check")
+            return False, 0.0
 
         img = image.convert("RGB")
         img = img.resize((IMG_SIZE, IMG_SIZE))
         arr = np.array(img).astype("float32") / 255.0
 
         if self.model is not None:
-            preds = self.model.predict(np.expand_dims(arr, axis=0))
-            probs = np.asarray(preds[0], dtype=float)
-            idx = int(np.argmax(probs))
-            label = self.CHECK_LABELS[idx]
-            return (label == "x-ray"), float(probs[idx])
+            try:
+                preds = self.model.predict(np.expand_dims(arr, axis=0))
+                # Handle different output shapes
+                # preds could be [ [prob] ] (sigmoid) or [ [p0, p1] ] (softmax)
+                probs = np.asarray(preds[0], dtype=float)
+                
+                if probs.size == 1:
+                    # Case: Sigmoid (1 output)
+                    score = float(probs)
+                    # Assuming 1 is x-ray and 0 is natural
+                    is_xray_pred = score > 0.5
+                    label = "x-ray" if is_xray_pred else "natural"
+                    confidence = score if is_xray_pred else (1.0 - score)
+                else:
+                    # Case: Softmax (2+ outputs)
+                    idx = int(np.argmax(probs))
+                    label = self.CHECK_LABELS[idx] if idx < len(self.CHECK_LABELS) else "unknown"
+                    confidence = float(probs[idx])
+                    is_xray_pred = (label == "x-ray")
+
+                logging.info(f"X-ray check result: label={label}, confidence={confidence:.4f}, raw_probs={probs}")
+                return is_xray_pred, confidence
+            except Exception as e:
+                logging.exception(f"Error during X-ray check model inference: {e}")
+                return False, 0.0
         
-        return True, 1.0 # Stub fallback
+        logging.warning("X-ray check model not loaded; returning False by default.")
+        return False, 0.0
 
 __all__ = ["DetectionModel", "XRayCheckModel"]

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from app.core.config import settings
 from app.models.chat_request import ChatRequest
 from app.models.chat_response import ChatResponse
 from app.services.retrieval_service import retrieve
@@ -9,6 +10,9 @@ from PIL import Image
 import io
 
 router = APIRouter()
+detector = DetectionModel(settings.DETECTION_MODEL_PATH)
+xray_checker = XRayCheckModel(settings.XRAY_CHECK_MODEL_PATH)
+
 OUT_OF_SCOPE_MESSAGE = "Hệ thống hiện chỉ hỏi đáp về các bệnh thường gặp ở phổi. Vui lòng đặt câu hỏi liên quan đến bệnh phổi."
 
 
@@ -134,9 +138,6 @@ async def chat_with_image(file: UploadFile = File(None), image_base64: str = For
         return ChatResponse(answer=answer)
 
     try:
-        detector = DetectionModel()
-        xray_checker = XRayCheckModel()
-        
         if file is not None:
             content = await file.read()
             image = Image.open(io.BytesIO(content))
@@ -151,7 +152,7 @@ async def chat_with_image(file: UploadFile = File(None), image_base64: str = For
         if not is_xray:
             raise HTTPException(
                 status_code=400, 
-                detail="Vui lòng đưa ảnh x-ray bệnh phổi lên để nhận diện."
+                detail="Vui lòng đưa ảnh X-quang để nhận diện."
             )
 
         # 2. Proceed with disease detection
