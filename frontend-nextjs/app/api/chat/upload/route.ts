@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     try {
       payload = text ? JSON.parse(text) : {};
     } catch {
-      payload = { raw: text };
+      payload = { detail: "Backend trả về định dạng không phải JSON (có thể là trang HTML lỗi)." };
     }
 
     if (!backendResponse.ok) {

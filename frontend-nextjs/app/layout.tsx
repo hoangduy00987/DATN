@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: "RAG Chatbot",
-  description: "Chatbot tư vấn bệnh phổi kết nối FastAPI",
+  title: "AI LungCare - Hệ thống Chẩn đoán & Tư vấn Bệnh phổi",
+  description: "Hệ thống trí tuệ nhân tạo hỗ trợ phân tích hình ảnh X-quang và tư vấn sức khỏe hô hấp.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

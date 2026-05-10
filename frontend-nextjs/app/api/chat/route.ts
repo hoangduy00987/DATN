@@ -22,7 +22,12 @@ export async function POST(request: NextRequest) {
     });
 
     const text = await response.text();
-    const payload = text ? JSON.parse(text) : {};
+    let payload: any = {};
+    try {
+      payload = text ? JSON.parse(text) : {};
+    } catch {
+      payload = { detail: "Backend trả về định dạng không phải JSON (có thể là trang HTML lỗi)." };
+    }
 
     if (!response.ok) {
       return NextResponse.json(

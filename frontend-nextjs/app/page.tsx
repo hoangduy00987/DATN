@@ -170,8 +170,8 @@ export default function HomePage() {
   return (
     <main className="main">
       <div className="title-container">
-        <h1 className="title">Hệ thống AI Bệnh Phổi</h1>
-        <p className="subtitle">Tư vấn và chẩn đoán sơ bộ qua hình ảnh X-quang</p>
+        <h1 className="title">AI LungCare</h1>
+        <p className="subtitle">Hệ thống Trí tuệ nhân tạo Chẩn đoán & Tư vấn Bệnh phổi</p>
       </div>
 
       <div ref={chatRef} className="chat-box">
