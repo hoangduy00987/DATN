@@ -7,3 +7,5 @@ pydantic
 fastapi[all]
 Pillow>=10.0.0
 tensorflow
+PyPDF2
+python-docx
