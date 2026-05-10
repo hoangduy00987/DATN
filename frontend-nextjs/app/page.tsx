@@ -72,7 +72,7 @@ export default function HomePage() {
         }
 
         const rawAnswer = typeof data?.answer === "string" ? data.answer : typeof data === "string" ? data : JSON.stringify(data);
-        const detectRegex = /^\[Phát hiện:\s*([^\]]+)\]\s*(.*)$/s;
+        const detectRegex = /^\[Phát hiện:\s*([^\]]+)\]\s*([\s\S]*)$/;
         const m = rawAnswer.match(detectRegex);
         let answerText = rawAnswer;
         let meta: ChatMessage["meta"] = null;
