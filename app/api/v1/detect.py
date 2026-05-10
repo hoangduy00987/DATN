@@ -31,7 +31,7 @@ async def detect(file: UploadFile = File(None), image_base64: str = Form(None)):
         if not is_xray:
             raise HTTPException(
                 status_code=400, 
-                detail="Vui lòng đưa ảnh X-quang để nhận diện."
+                detail="Vui lòng đưa ảnh X-quang phổi vào để tiến hành nhận diện."
             )
 
         # 2. Proceed with disease detection
