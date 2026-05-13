@@ -8,10 +8,9 @@ __pycache__/
 
 # Large model files
 app/models/*.h5
+app/models/*.keras
 app/models/*.pth
 app/models/*.bin
-app/models/densenet121_chest_xray_step-1-v3.h5
-
 # Data
 data/chroma_db/
 

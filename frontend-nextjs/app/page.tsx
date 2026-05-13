@@ -84,14 +84,12 @@ export default function HomePage() {
     chatRef.current.scrollTop = chatRef.current.scrollHeight;
   };
 
-  const onSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!canSend && !file) return;
-    const userText = query.trim();
+  const handleSendMessage = async (userText: string, fileToSend: File | null) => {
+    if (!userText.trim() && !fileToSend) return;
     setQuery("");
     setLoading(true);
 
-    if (file) {
+    if (fileToSend) {
       const readFileAsDataURL = (f: File) =>
         new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -100,12 +98,12 @@ export default function HomePage() {
           reader.readAsDataURL(f);
         });
 
-      const dataUrl = await readFileAsDataURL(file);
+      const dataUrl = await readFileAsDataURL(fileToSend);
       setMessages((prev) => [...prev, { role: "user", text: userText || "", imageUrl: dataUrl }]);
       removeFile();
       try {
         const form = new FormData();
-        form.append("file", file);
+        form.append("file", fileToSend);
         if (userText) form.append("query", userText);
 
         const res = await fetch("/api/chat/upload", {
@@ -177,6 +175,12 @@ export default function HomePage() {
     }
   };
 
+  const onSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!canSend && !file) return;
+    await handleSendMessage(query, file);
+  };
+
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
     const allowed = ["image/png", "image/jpeg", "image/jpg"];
@@ -186,8 +190,14 @@ export default function HomePage() {
         e.currentTarget.value = "";
         return;
       }
-      setFile(f);
-      setPreviewUrl(URL.createObjectURL(f));
+      if (f.size > 5 * 1024 * 1024) {
+        alert("Hình ảnh upload không được quá 5MB.");
+        e.currentTarget.value = "";
+        return;
+      }
+      // Auto send immediately
+      handleSendMessage(query, f);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 

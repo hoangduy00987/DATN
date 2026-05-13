@@ -1,6 +1,7 @@
 import logging
 from typing import Tuple
 import os
+import json
 
 try:
     from PIL import Image
@@ -25,13 +26,28 @@ except Exception:  # pragma: no cover
 IMG_SIZE = 224
 
 # Primary labels (step-1). Exact order used by the first-stage model.
-LABELS = [
-    "covid-19",
-    "khí phế thũng",
-    "phổi khỏe mạnh",
-    "viêm phổi",
-    "lao phổi",
-]
+def _load_labels():
+    try:
+        base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models"))
+        json_path = os.path.join(base, "class_indices (1).json")
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        # Assuming data is dict: {"label": index}
+        labels = [None] * len(data)
+        for k, v in data.items():
+            labels[v] = k
+        return labels
+    except Exception as e:
+        logging.warning(f"Could not load labels from json: {e}")
+        return [
+            "covid-19",        # 0: COVID
+            "phổi khỏe mạnh",  # 1: NORMAL
+            "viêm phổi",       # 2: PNEUMONIA
+            "lao phổi",        # 3: Tuberculosis
+            "khí phế thũng",   # 4: emphReform
+        ]
+
+LABELS = _load_labels()
 
 
 
@@ -94,7 +110,8 @@ class DetectionModel(BaseModel):
     """Cascade-capable detection model wrapper."""
 
     def __init__(self, model_path: str = ""):
-        super().__init__(model_path, "densenet121_chest_xray_step-1-v3.h5")
+        super().__init__(model_path, "best_densenet201_v2_0.89_512.keras")
+        self.img_size = 224  # IMAGE_SIZE=224, 512 is NB_FEATURES
 
     def _run_model_predict(self, model, img_arr: np.ndarray) -> Tuple[str, float]:
         try:
@@ -118,7 +135,9 @@ class DetectionModel(BaseModel):
             raise ValueError("Input must be a PIL.Image.Image")
 
         img = image.convert("RGB")
-        img = img.resize((IMG_SIZE, IMG_SIZE))
+        
+        target_size = getattr(self, "img_size", IMG_SIZE)
+        img = img.resize((target_size, target_size))
         arr = np.array(img).astype("float32") / 255.0
 
         if self.model is not None:
