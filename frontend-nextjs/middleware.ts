@@ -4,6 +4,7 @@ import { jwtVerify } from "jose";
 
 const LOGIN_PATH = "/login";
 const CHAT_PATH = "/chat";
+const PATIENT_HOME = "/chat/dat-lich";
 
 const CHAT_ROLES = new Set(["doctor", "admin"]);
 const LEGIT_ROLES = new Set(["doctor", "patient", "admin"]);
@@ -104,8 +105,18 @@ async function resolveEffectiveRole(request: NextRequest): Promise<{
   return { role: null, syncUserRoleCookie: false };
 }
 
-function canUseChat(role: string | null): boolean {
+function canUseDoctorChat(role: string | null): boolean {
   return role != null && CHAT_ROLES.has(role);
+}
+
+/** Trang đặt lịch / kết quả — chỉ role patient. */
+function isPatientPortalPath(pathname: string): boolean {
+  return (
+    pathname === "/chat/dat-lich" ||
+    pathname.startsWith("/chat/dat-lich/") ||
+    pathname === "/chat/ket-qua" ||
+    pathname.startsWith("/chat/ket-qua/")
+  );
 }
 
 function redirectToLogin(request: NextRequest, reason: "patient" | "forbidden" | "reauth") {
@@ -119,7 +130,7 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const loggedIn = hasSessionCookie(request);
   const { role, syncUserRoleCookie } = await resolveEffectiveRole(request);
-  const chatOk = canUseChat(role);
+  const doctorChatOk = canUseDoctorChat(role);
 
   const patch = (res: NextResponse) => {
     if (syncUserRoleCookie && role) applyUserRoleCookie(res, role);
@@ -133,21 +144,31 @@ export async function middleware(request: NextRequest) {
       url.search = "";
       return patch(NextResponse.redirect(url));
     }
-    if (chatOk) {
+    if (!role) {
+      return patch(redirectToLogin(request, "reauth"));
+    }
+    if (doctorChatOk) {
       const url = request.nextUrl.clone();
       url.pathname = CHAT_PATH;
       return patch(NextResponse.redirect(url));
     }
-    if (!role) {
-      return patch(redirectToLogin(request, "reauth"));
+    if (role === "patient") {
+      const url = request.nextUrl.clone();
+      url.pathname = PATIENT_HOME;
+      return patch(NextResponse.redirect(url));
     }
     return patch(redirectToLogin(request, "patient"));
   }
 
   if (pathname === LOGIN_PATH || pathname.startsWith(`${LOGIN_PATH}/`)) {
-    if (loggedIn && chatOk) {
+    if (loggedIn && doctorChatOk) {
       const url = request.nextUrl.clone();
       url.pathname = CHAT_PATH;
+      return patch(NextResponse.redirect(url));
+    }
+    if (loggedIn && role === "patient") {
+      const url = request.nextUrl.clone();
+      url.pathname = PATIENT_HOME;
       return patch(NextResponse.redirect(url));
     }
     return patch(NextResponse.next());
@@ -163,9 +184,26 @@ export async function middleware(request: NextRequest) {
     if (!role) {
       return patch(redirectToLogin(request, "reauth"));
     }
-    if (!chatOk) {
+
+    if (isPatientPortalPath(pathname)) {
+      if (role === "patient") {
+        return patch(NextResponse.next());
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = CHAT_PATH;
+      url.search = "";
+      return patch(NextResponse.redirect(url));
+    }
+
+    if (!doctorChatOk) {
+      if (role === "patient") {
+        const url = request.nextUrl.clone();
+        url.pathname = PATIENT_HOME;
+        return patch(NextResponse.redirect(url));
+      }
       return patch(redirectToLogin(request, "forbidden"));
     }
+
     return patch(NextResponse.next());
   }
 

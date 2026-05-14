@@ -1,0 +1,400 @@
+/* Trang đăng nhập — import trong layout để tránh <style> hydration trong page.tsx */
+.login-shell {
+  font-family: var(--font-poppins), "Poppins", system-ui, sans-serif;
+  overflow-x: hidden;
+  width: 100%;
+}
+
+.login-shell .page-root {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(165deg, #022c22 0%, #065f46 38%, #059669 72%, #34d399 100%);
+}
+
+/* Cột trái: logo + slogan — căn giữa theo cột, slogan xuống dòng */
+.login-shell .login-hero {
+  flex: 1 1 46%;
+  min-width: 0;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 36px 56px;
+  gap: 28px;
+}
+
+/* Logo + slogan cùng một trục giữa; dịch phải 220px, lên ~20px (desktop) */
+.login-shell .login-hero-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  gap: 20px;
+  transform: translateX(220px) translateY(-20px);
+}
+
+.login-shell .login-logo-link {
+  display: block;
+  line-height: 0;
+  transition: opacity 0.2s ease;
+}
+
+.login-shell .login-logo-link:hover {
+  opacity: 0.92;
+}
+
+.login-shell .login-logo-img {
+  width: auto;
+  height: auto;
+  max-width: min(560px, 90vw);
+  max-height: min(60vh, 520px);
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.22));
+}
+
+/* Khối slogan: cùng trục với logo (con của .login-hero-brand) */
+.login-shell .login-slogan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: min(26rem, 100%);
+  min-width: 0;
+  text-align: center;
+}
+
+.login-shell .login-slogan-title {
+  margin: 0;
+  font-size: clamp(1.05rem, 2.15vw, 1.85rem);
+  font-weight: 700;
+  color: #ecfdf5;
+  line-height: 1.4;
+  letter-spacing: -0.025em;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+  text-align: center;
+  text-wrap: balance;
+  max-width: 100%;
+}
+
+.login-shell .login-slogan-sep {
+  font-weight: 600;
+  color: rgba(240, 253, 244, 0.94);
+}
+
+.login-shell .login-slogan-brand {
+  font-weight: 800;
+  color: #f0fdf4;
+}
+
+.login-shell .login-slogan-lead {
+  font-weight: 600;
+  color: rgba(240, 253, 244, 0.94);
+}
+
+.login-shell .login-slogan-sub {
+  margin: 0;
+  font-size: clamp(0.9rem, 1.45vw, 1.05rem);
+  font-weight: 500;
+  line-height: 1.55;
+  color: rgba(236, 253, 245, 0.88);
+  max-width: 26rem;
+}
+
+/* Cột phải: form — dịch sang phải (desktop); mobile không dịch */
+.login-shell .login-form-area {
+  flex: 1 1 54%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px 20px 28px 10px;
+  min-width: 0;
+  transform: translateX(450px);
+}
+
+@media (max-width: 900px) {
+  .login-shell .page-root {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .login-shell .login-hero {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: none;
+    align-items: center;
+    text-align: center;
+    padding: 32px 24px 24px;
+    gap: 18px;
+  }
+
+  .login-shell .login-hero-brand {
+    transform: translateX(20px) translateY(-20px);
+    width: 100%;
+    max-width: min(100%, 92vw);
+  }
+
+  .login-shell .login-logo-link {
+    transform: none;
+  }
+
+  .login-shell .login-logo-img {
+    max-width: min(460px, 92vw);
+    max-height: 280px;
+  }
+
+  .login-shell .login-slogan {
+    align-items: center;
+    text-align: center;
+    max-width: min(100%, 92vw);
+  }
+
+  .login-shell .login-form-area {
+    flex: 1 1 auto;
+    width: 100%;
+    justify-content: center;
+    padding: 8px 16px 28px;
+    transform: none;
+  }
+}
+
+.login-shell .wrapper {
+  overflow: hidden;
+  max-width: 390px;
+  width: 90%;
+  background: #fff;
+  padding: 24px;
+  border-radius: 15px;
+  box-shadow: 0 18px 48px rgba(2, 44, 34, 0.28);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.login-shell .title-text {
+  display: flex;
+  width: 200%;
+  overflow: hidden;
+}
+
+.login-shell .title {
+  width: 50%;
+  font-size: 35px;
+  font-weight: 600;
+  text-align: center;
+  transition: margin 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  color: #064e3b;
+}
+
+.login-shell .slide-controls {
+  position: relative;
+  display: flex;
+  height: 50px;
+  width: 100%;
+  overflow: hidden;
+  margin: 30px 0 10px 0;
+  justify-content: space-between;
+  border: 1px solid rgba(6, 95, 70, 0.22);
+  border-radius: 15px;
+}
+
+.login-shell .slide-btn {
+  height: 100%;
+  width: 100%;
+  color: #000;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 48px;
+  cursor: pointer;
+  z-index: 1;
+  transition: color 0.6s ease;
+  border: none;
+  background: transparent;
+  font-family: var(--font-poppins), "Poppins", system-ui, sans-serif;
+}
+
+.login-shell .slide-btn.active {
+  color: #fff;
+  cursor: default;
+  user-select: none;
+}
+
+.login-shell .slider-tab {
+  position: absolute;
+  height: 100%;
+  width: 50%;
+  left: 0;
+  z-index: 0;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #022c22 0%, #065f46 45%, #059669 85%, #10b981 100%);
+  transition: left 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.login-shell .slider-tab.signup {
+  left: 50%;
+}
+
+.login-shell .form-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.login-shell .form-inner {
+  display: flex;
+  width: 200%;
+  transition: margin 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.login-shell .form-inner form {
+  width: 50%;
+}
+
+.login-shell .field {
+  height: 50px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.login-shell .field input {
+  height: 100%;
+  width: 100%;
+  outline: none;
+  padding-left: 15px;
+  border-radius: 15px;
+  border: 1px solid lightgrey;
+  border-bottom-width: 2px;
+  font-size: 17px;
+  transition: all 0.3s ease;
+  font-family: var(--font-poppins), "Poppins", system-ui, sans-serif;
+}
+
+.login-shell .field input:focus {
+  border-color: #059669;
+}
+
+.login-shell .field input::placeholder {
+  color: #999;
+  transition: all 0.3s ease;
+}
+
+.login-shell .field input:focus::placeholder {
+  color: #059669;
+}
+
+.login-shell .pass-link {
+  margin-top: 5px;
+}
+
+.login-shell .signup-link {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.login-shell .pass-link a,
+.login-shell .signup-link a {
+  color: #047857;
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-size: inherit;
+  font-family: var(--font-poppins), "Poppins", system-ui, sans-serif;
+}
+
+.login-shell .pass-link a:hover,
+.login-shell .signup-link a:hover {
+  text-decoration: underline;
+}
+
+.login-shell .btn-field {
+  height: 50px;
+  width: 100%;
+  border-radius: 15px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.login-shell .btn-layer {
+  height: 100%;
+  width: 300%;
+  position: absolute;
+  left: -100%;
+  background: linear-gradient(to left, #022c22, #065f46, #059669, #34d399);
+  border-radius: 15px;
+  transition: left 0.4s ease;
+}
+
+.login-shell .btn-field:hover .btn-layer {
+  left: 0;
+}
+
+.login-shell .btn-field button[type="submit"] {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+  position: relative;
+  background: none;
+  border: none;
+  color: #fff;
+  border-radius: 15px;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-poppins), "Poppins", system-ui, sans-serif;
+  transition: opacity 0.2s;
+}
+
+.login-shell .btn-field button[type="submit"]:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-shell .alert {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.login-shell .alert.error {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.login-shell .alert.success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.login-shell .alert.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.login-shell .notice-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.login-shell .notice-actions button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #065f46, #059669);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font-poppins), "Poppins", system-ui, sans-serif;
+}

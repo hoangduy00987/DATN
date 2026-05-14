@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useState, FormEvent, useEffect } from "react";
 
 const ACCESS_NOTICE: Record<"patient" | "forbidden" | "reauth", string> = {
     patient:
-        "Bạn đã đăng nhập với tư cách người khám bệnh. Khu vực chat AI chỉ dành cho bác sĩ.",
+        "Tài khoản của bạn không có quyền vào khu vực này. Vui lòng dùng đúng loại tài khoản hoặc liên hệ quản trị.",
     forbidden: "Tài khoản của bạn không có quyền vào trang chat.",
     reauth: "Phiên đăng nhập cần làm mới. Vui lòng đăng xuất rồi đăng nhập lại.",
 };
@@ -109,269 +111,31 @@ export default function LoginPage() {
     const isLogin = activeTab === "login";
 
     return (
-        <>
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-
-                *, *::before, *::after {
-                    margin: 0;
-                    padding: 0;
-                    box-sizing: border-box;
-                    font-family: 'Poppins', sans-serif;
-                }
-
-                .page-root {
-                    display: grid;
-                    min-height: 100vh;
-                    width: 100%;
-                    place-items: center;
-                    background: linear-gradient(to right, #003366, #004080, #0059b3, #0073e6);
-                }
-
-                ::selection {
-                    background: #1a75ff;
-                    color: #fff;
-                }
-
-                .wrapper {
-                    overflow: hidden;
-                    max-width: 390px;
-                    width: 90%;
-                    background: #fff;
-                    padding: 30px;
-                    border-radius: 15px;
-                    box-shadow: 0px 15px 20px rgba(0,0,0,0.1);
-                }
-
-                .title-text {
-                    display: flex;
-                    width: 200%;
-                    overflow: hidden;
-                }
-
-                .title {
-                    width: 50%;
-                    font-size: 35px;
-                    font-weight: 600;
-                    text-align: center;
-                    transition: margin 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-                }
-
-                .slide-controls {
-                    position: relative;
-                    display: flex;
-                    height: 50px;
-                    width: 100%;
-                    overflow: hidden;
-                    margin: 30px 0 10px 0;
-                    justify-content: space-between;
-                    border: 1px solid lightgrey;
-                    border-radius: 15px;
-                }
-
-                .slide-btn {
-                    height: 100%;
-                    width: 100%;
-                    color: #000;
-                    font-size: 18px;
-                    font-weight: 500;
-                    text-align: center;
-                    line-height: 48px;
-                    cursor: pointer;
-                    z-index: 1;
-                    transition: color 0.6s ease;
-                    border: none;
-                    background: transparent;
-                    font-family: 'Poppins', sans-serif;
-                }
-
-                .slide-btn.active {
-                    color: #fff;
-                    cursor: default;
-                    user-select: none;
-                }
-
-                .slider-tab {
-                    position: absolute;
-                    height: 100%;
-                    width: 50%;
-                    left: 0;
-                    z-index: 0;
-                    border-radius: 15px;
-                    background: linear-gradient(to right, #003366, #004080, #0059b3, #0073e6);
-                    transition: left 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-                }
-
-                .slider-tab.signup {
-                    left: 50%;
-                }
-
-                .form-container {
-                    width: 100%;
-                    overflow: hidden;
-                }
-
-                .form-inner {
-                    display: flex;
-                    width: 200%;
-                    transition: margin 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-                }
-
-                .form-inner form {
-                    width: 50%;
-                }
-
-                .field {
-                    height: 50px;
-                    width: 100%;
-                    margin-top: 20px;
-                }
-
-                .field input {
-                    height: 100%;
-                    width: 100%;
-                    outline: none;
-                    padding-left: 15px;
-                    border-radius: 15px;
-                    border: 1px solid lightgrey;
-                    border-bottom-width: 2px;
-                    font-size: 17px;
-                    transition: all 0.3s ease;
-                    font-family: 'Poppins', sans-serif;
-                }
-
-                .field input:focus {
-                    border-color: #1a75ff;
-                }
-
-                .field input::placeholder {
-                    color: #999;
-                    transition: all 0.3s ease;
-                }
-
-                .field input:focus::placeholder {
-                    color: #1a75ff;
-                }
-
-                .pass-link {
-                    margin-top: 5px;
-                }
-
-                .signup-link {
-                    text-align: center;
-                    margin-top: 30px;
-                }
-
-                .pass-link a,
-                .signup-link a {
-                    color: #1a75ff;
-                    text-decoration: none;
-                    cursor: pointer;
-                    background: none;
-                    border: none;
-                    font-size: inherit;
-                    font-family: 'Poppins', sans-serif;
-                }
-
-                .pass-link a:hover,
-                .signup-link a:hover {
-                    text-decoration: underline;
-                }
-
-                .btn-field {
-                    height: 50px;
-                    width: 100%;
-                    border-radius: 15px;
-                    position: relative;
-                    overflow: hidden;
-                    margin-top: 20px;
-                }
-
-                .btn-layer {
-                    height: 100%;
-                    width: 300%;
-                    position: absolute;
-                    left: -100%;
-                    background: linear-gradient(to left, #003366, #004080, #0059b3, #0073e6);
-                    border-radius: 15px;
-                    transition: left 0.4s ease;
-                }
-
-                .btn-field:hover .btn-layer {
-                    left: 0;
-                }
-
-                .btn-field button[type="submit"] {
-                    height: 100%;
-                    width: 100%;
-                    z-index: 1;
-                    position: relative;
-                    background: none;
-                    border: none;
-                    color: #fff;
-                    border-radius: 15px;
-                    font-size: 20px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    font-family: 'Poppins', sans-serif;
-                    transition: opacity 0.2s;
-                }
-
-                .btn-field button[type="submit"]:disabled {
-                    opacity: 0.7;
-                    cursor: not-allowed;
-                }
-
-                .alert {
-                    margin-top: 12px;
-                    padding: 10px 14px;
-                    border-radius: 10px;
-                    font-size: 13px;
-                    text-align: center;
-                }
-
-                .alert.error {
-                    background: #fee2e2;
-                    color: #dc2626;
-                }
-
-                .alert.success {
-                    background: #dcfce7;
-                    color: #16a34a;
-                }
-
-                .alert.warning {
-                    background: #fef3c7;
-                    color: #92400e;
-                }
-
-                .notice-actions {
-                    margin-top: 12px;
-                    display: flex;
-                    justify-content: center;
-                }
-
-                .notice-actions button {
-                    padding: 8px 16px;
-                    border-radius: 8px;
-                    border: none;
-                    background: #003366;
-                    color: #fff;
-                    font-size: 13px;
-                    font-weight: 500;
-                    cursor: pointer;
-                    font-family: 'Poppins', sans-serif;
-                }
-
-                .brand {
-                    text-align: center;
-                    font-size: 13px;
-                    color: #64748b;
-                    margin-top: 24px;
-                }
-            `}</style>
-
+        <div className="login-shell">
             <div className="page-root">
+                <section className="login-hero" aria-labelledby="login-slogan-heading">
+                    <div className="login-hero-brand">
+                        <Link href="/" className="login-logo-link">
+                            <Image
+                                src="/logo.png"
+                                alt="LungCare"
+                                width={640}
+                                height={640}
+                                priority
+                                sizes="(max-width: 900px) 92vw, 560px"
+                                className="login-logo-img"
+                            />
+                        </Link>
+                        <div className="login-slogan">
+                            <h1 id="login-slogan-heading" className="login-slogan-title">
+                                <span className="login-slogan-brand">LungCare</span>
+                                <span className="login-slogan-sep"> — </span>
+                                <span className="login-slogan-lead">Đồng hành cùng sức khỏe phổi của bạn</span>
+                            </h1>
+                        </div>
+                    </div>
+                </section>
+                <div className="login-form-area">
                 <div className="wrapper">
                     {accessNotice && (
                         <div className="alert warning" style={{ marginBottom: 16 }}>
@@ -507,10 +271,9 @@ export default function LoginPage() {
                             </form>
                         </div>
                     </div>
-
-                    <p className="brand">LungCare AI — Dành cho Bác sĩ</p>
+                </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 }
