@@ -25,29 +25,29 @@ except Exception:  # pragma: no cover
 # Updated to 224 to match frontend upload/resizing requirement
 IMG_SIZE = 224
 
-# Primary labels (step-1). Exact order used by the first-stage model.
+# Primary labels loading (matches user snippet)
 def _load_labels():
     try:
         base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models"))
         json_path = os.path.join(base, "class_indices (1).json")
         with open(json_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        # Assuming data is dict: {"label": index}
-        labels = [None] * len(data)
-        for k, v in data.items():
-            labels[v] = k
+            class_indices = json.load(f)
+        
+        # Reverse mapping: {0: 'COVID', 1: 'NORMAL',...}
+        labels = {v: k for k, v in class_indices.items()}
         return labels
     except Exception as e:
         logging.warning(f"Could not load labels from json: {e}")
-        return [
-            "covid-19",        # 0: COVID
-            "phổi khỏe mạnh",  # 1: NORMAL
-            "viêm phổi",       # 2: PNEUMONIA
-            "lao phổi",        # 3: Tuberculosis
-            "khí phế thũng",   # 4: emphReform
-        ]
+        # Fallback dictionary if file not found
+        return {
+            0: "COVID",
+            1: "NORMAL",
+            2: "PNEUMONIA",
+            3: "Tuberculosis",
+            4: "Emphysema"
+        }
 
-LABELS = _load_labels()
+LABELS_MAP = _load_labels()
 
 
 
@@ -115,15 +115,20 @@ class DetectionModel(BaseModel):
 
     def _run_model_predict(self, model, img_arr: np.ndarray) -> Tuple[str, float]:
         try:
-            preds = model.predict(np.expand_dims(img_arr, axis=0))
-            if hasattr(preds, "ndim") and preds.ndim >= 2:
-                probs = np.asarray(preds[0], dtype=float)
-            else:
-                probs = np.asarray(preds, dtype=float)
-            idx = int(np.argmax(probs))
-            score = float(probs[idx])
-            label = LABELS[idx] if len(probs) == len(LABELS) else "unknown"
-            return label, round(score, 4)
+            # Matches user snippet: img_array = np.expand_dims(img_array, axis=0)
+            img_batch = np.expand_dims(img_arr, axis=0)
+            predictions = model.predict(img_batch)
+            
+            # Matches user snippet: predicted_class_index = np.argmax(predictions, axis=1)[0]
+            predicted_class_index = int(np.argmax(predictions, axis=1)[0])
+            
+            # Matches user snippet: confidence = np.max(predictions)
+            confidence = float(np.max(predictions))
+            
+            # Matches user snippet: predicted_label = labels[predicted_class_index]
+            predicted_label = LABELS_MAP.get(predicted_class_index, "unknown")
+            
+            return predicted_label, round(confidence, 4)
         except Exception:
             logging.exception("Error during model inference")
             return "unknown", 0.0
@@ -145,9 +150,10 @@ class DetectionModel(BaseModel):
         
         # Stub logic
         mean = float(arr.mean())
-        bin_index = int(min(max(mean * len(LABELS), 0), len(LABELS) - 1))
-        label = LABELS[bin_index]
-        bin_center = (bin_index + 0.5) / len(LABELS)
+        num_labels = len(LABELS_MAP)
+        bin_index = int(min(max(mean * num_labels, 0), num_labels - 1))
+        label = LABELS_MAP.get(bin_index, "unknown")
+        bin_center = (bin_index + 0.5) / num_labels
         distance = abs(mean - bin_center)
         score = max(0.5, 1.0 - distance * 2.0)
         return label, round(float(score), 4)

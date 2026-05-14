@@ -29,7 +29,7 @@
   gap: 28px;
 }
 
-/* Logo + slogan cùng một trục giữa; dịch phải 220px, lên ~20px (desktop) */
+/* Logo + slogan cùng một trục giữa */
 .login-shell .login-hero-brand {
   display: flex;
   flex-direction: column;
@@ -37,7 +37,6 @@
   width: fit-content;
   max-width: 100%;
   gap: 20px;
-  transform: translateX(220px) translateY(-20px);
 }
 
 .login-shell .login-logo-link {
@@ -110,17 +109,39 @@
   max-width: 26rem;
 }
 
-/* Cột phải: form — dịch sang phải (desktop); mobile không dịch */
+/* Cột phải: form */
 .login-shell .login-form-area {
-  flex: 1 1 54%;
+  flex: 0 0 auto;
+  width: 420px;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding: 24px 20px 28px 10px;
-  min-width: 0;
-  transform: translateX(450px);
+  justify-content: center;
+  padding: 24px 20px 28px;
 }
 
+/* ── Laptop (≤ 1100px) ── */
+@media (max-width: 1100px) {
+  .login-shell .login-hero {
+    padding: 36px 24px 40px;
+  }
+
+  .login-shell .login-hero-brand {
+    max-width: min(100%, 88vw);
+  }
+
+  .login-shell .login-logo-img {
+    max-width: min(460px, 88vw);
+    max-height: min(52vh, 400px);
+  }
+
+  .login-shell .login-form-area {
+    width: 380px;
+    padding: 24px 16px 28px;
+  }
+}
+
+/* ── Tablet (≤ 900px) ── */
 @media (max-width: 900px) {
   .login-shell .page-root {
     flex-direction: column;
@@ -133,23 +154,18 @@
     max-width: none;
     align-items: center;
     text-align: center;
-    padding: 32px 24px 24px;
-    gap: 18px;
+    padding: 28px 20px 20px;
+    gap: 14px;
   }
 
   .login-shell .login-hero-brand {
-    transform: translateX(20px) translateY(-20px);
     width: 100%;
     max-width: min(100%, 92vw);
   }
 
-  .login-shell .login-logo-link {
-    transform: none;
-  }
-
   .login-shell .login-logo-img {
-    max-width: min(460px, 92vw);
-    max-height: 280px;
+    max-width: min(380px, 80vw);
+    max-height: 220px;
   }
 
   .login-shell .login-slogan {
@@ -159,11 +175,68 @@
   }
 
   .login-shell .login-form-area {
-    flex: 1 1 auto;
     width: 100%;
     justify-content: center;
     padding: 8px 16px 28px;
-    transform: none;
+  }
+}
+
+/* ── Mobile (≤ 480px) ── */
+@media (max-width: 480px) {
+  .login-shell .login-hero {
+    padding: 20px 14px 16px;
+    gap: 10px;
+  }
+
+  .login-shell .login-logo-img {
+    max-width: min(280px, 85vw);
+    max-height: 160px;
+  }
+
+  .login-shell .login-slogan-title {
+    font-size: clamp(0.95rem, 4.5vw, 1.4rem);
+  }
+
+  .login-shell .login-form-area {
+    padding: 6px 12px 24px;
+  }
+
+  .login-shell .wrapper {
+    width: 100%;
+    max-width: none;
+    padding: 18px 16px;
+    border-radius: 12px;
+  }
+
+  .login-shell .title {
+    font-size: 26px;
+  }
+
+  .login-shell .field input {
+    font-size: 15px;
+  }
+
+  .login-shell .btn-field button[type="submit"] {
+    font-size: 17px;
+  }
+}
+
+/* ── Very small phones (≤ 360px) ── */
+@media (max-width: 360px) {
+  .login-shell .login-logo-img {
+    max-height: 120px;
+  }
+
+  .login-shell .wrapper {
+    padding: 16px 12px;
+  }
+
+  .login-shell .title {
+    font-size: 22px;
+  }
+
+  .login-shell .slide-btn {
+    font-size: 15px;
   }
 }
 

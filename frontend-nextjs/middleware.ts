@@ -114,6 +114,8 @@ function isPatientPortalPath(pathname: string): boolean {
   return (
     pathname === "/chat/dat-lich" ||
     pathname.startsWith("/chat/dat-lich/") ||
+    pathname === "/chat/lich-da-dat" ||
+    pathname.startsWith("/chat/lich-da-dat/") ||
     pathname === "/chat/ket-qua" ||
     pathname.startsWith("/chat/ket-qua/")
   );

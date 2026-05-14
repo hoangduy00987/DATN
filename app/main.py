@@ -11,6 +11,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.chat import router as chat_router
 from app.api.v1.detect import router as detect_router
 from app.api.v1.ingest import router as ingest_router
+from app.api.v1.appointments import router as appointments_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -70,6 +71,7 @@ app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])
 app.include_router(detect_router, prefix="/api/v1/detect", tags=["detect"])
 app.include_router(ingest_router, prefix="/api/v1/ingest", tags=["ingest"])
+app.include_router(appointments_router, prefix="/api/v1/appointments", tags=["appointments"])
 
 @app.get("/")
 def read_root():

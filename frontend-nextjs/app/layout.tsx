@@ -16,6 +16,12 @@ export const metadata: Metadata = {
   description: "Hệ thống trí tuệ nhân tạo hỗ trợ phân tích hình ảnh X-quang và tư vấn sức khỏe hô hấp.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi" className={poppins.variable}>

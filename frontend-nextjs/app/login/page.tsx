@@ -39,7 +39,22 @@ export default function LoginPage() {
         if (r === "patient" || r === "forbidden" || r === "reauth") setAccessNotice(r);
     }, []);
 
+    // Reset forms when switching tabs
+    useEffect(() => {
+        setLoginEmail("");
+        setLoginPassword("");
+        setLoginError("");
+        setSignupEmail("");
+        setSignupPassword("");
+        setSignupConfirm("");
+        setSignupError("");
+        setSignupSuccess("");
+    }, [activeTab]);
+
     const handleLogout = async () => {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("user_role");
         await fetch("/api/auth/logout", { method: "POST" });
         window.location.href = "/login";
     };
@@ -58,13 +73,20 @@ export default function LoginPage() {
                 body: JSON.stringify({ email: loginEmail, password: loginPassword }),
             });
 
+            const data = await res.json();
             if (!res.ok) {
-                const data = await res.json();
                 setLoginError(data?.detail || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
                 return;
             }
 
-            // Full reload: cookie từ response login được gửi kèm request tới `/` và middleware chạy ổn định hơn so với router.push.
+            // Save to localStorage for components that need it
+            if (data.access_token) {
+                localStorage.setItem("access_token", data.access_token);
+                localStorage.setItem("refresh_token", data.refresh_token);
+                localStorage.setItem("user_role", data.role);
+            }
+
+            // Full reload: cookie từ response login được gửi kèm request tới `/` và middleware chạy ổn định hơn so with router.push.
             window.location.replace("/");
         } catch {
             setLoginError("Lỗi kết nối khi đăng nhập.");
@@ -83,6 +105,15 @@ export default function LoginPage() {
             return;
         }
 
+        // Password complexity check
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+        if (!passwordRegex.test(signupPassword)) {
+            setSignupError(
+                "Mật khẩu phải có ít nhất 8 ký tự, bao gồm: 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt (@$!%*?&#)."
+            );
+            return;
+        }
+
         setSignupLoading(true);
         try {
             const res = await fetch("/api/auth/register", {
@@ -95,11 +126,26 @@ export default function LoginPage() {
             if (!res.ok) {
                 setSignupError(data?.detail || "Đăng ký thất bại.");
             } else {
-                setSignupSuccess("Đăng ký thành công! Bạn có thể đăng nhập.");
-                setSignupEmail("");
-                setSignupPassword("");
-                setSignupConfirm("");
-                setTimeout(() => setActiveTab("login"), 1500);
+                setSignupSuccess("Đăng ký thành công! Đang tự động đăng nhập...");
+                
+                // Auto-login after registration
+                try {
+                    if (loginRes.ok) {
+                        const loginData = await loginRes.json();
+                        if (loginData.access_token) {
+                            localStorage.setItem("access_token", loginData.access_token);
+                            localStorage.setItem("refresh_token", loginData.refresh_token);
+                            localStorage.setItem("user_role", loginData.role);
+                        }
+                        window.location.replace("/");
+                    } else {
+                        setSignupSuccess("Đăng ký thành công! Vui lòng chuyển sang tab đăng nhập.");
+                        setTimeout(() => setActiveTab("login"), 1500);
+                    }
+                } catch {
+                    setSignupSuccess("Đăng ký thành công! Vui lòng chuyển sang tab đăng nhập.");
+                    setTimeout(() => setActiveTab("login"), 1500);
+                }
             }
         } catch {
             setSignupError("Lỗi kết nối khi đăng ký.");

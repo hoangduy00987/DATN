@@ -68,6 +68,7 @@ export default function HomePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const docInputRef = useRef<HTMLInputElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "bot",
@@ -77,13 +78,13 @@ export default function HomePage() {
   const STORAGE_KEY = "chat_messages_v1";
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState("Đang suy nghĩ...");
+  const [hasLoaded, setHasLoaded] = useState(false); // Flag to prevent overwriting during initial load
   const chatRef = useRef<HTMLDivElement>(null);
 
   const canSend = useMemo(() => query.trim().length > 0 && !loading, [query, loading]);
 
-  const scrollToBottom = () => {
-    if (!chatRef.current) return;
-    chatRef.current.scrollTop = chatRef.current.scrollHeight;
+  const scrollToBottom = (behavior: ScrollBehavior = "auto") => {
+    messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
   const handleSendMessage = async (userText: string, fileToSend: File | null) => {
@@ -157,28 +158,69 @@ export default function HomePage() {
 
     setMessages((prev) => [...prev, { role: "user", text: userText }]);
 
+    // Add a placeholder message for the bot's streaming response
+    setMessages((prev) => [...prev, { role: "bot", text: "" }]);
+
     try {
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/chat-stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: userText }),
       });
 
-      const data = await res.json();
       if (res.status === 401 || res.status === 403) {
         window.location.href = "/login";
-        throw new Error("Bạn cần đăng nhập để sử dụng tính năng này.");
+        return;
       }
       if (!res.ok) {
+        const data = await res.json();
         const detail = data?.detail || "Không thể lấy phản hồi từ hệ thống.";
         throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
       }
 
-      const answer = typeof data?.answer === "string" ? data.answer : "Không có phản hồi hợp lệ.";
-      setMessages((prev) => [...prev, { role: "bot", text: answer }]);
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("Không thể khởi tạo bộ đọc stream.");
+
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        // SSE format: data: {"text": "..."}\n\n
+        const lines = chunk.split("\n");
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.slice(6));
+              if (data.text) {
+                fullText += data.text;
+                // Update the last message in state
+                setMessages((prev) => {
+                  const newMsgs = [...prev];
+                  newMsgs[newMsgs.length - 1] = { ...newMsgs[newMsgs.length - 1], text: fullText };
+                  return newMsgs;
+                });
+                // Ensure we scroll to bottom during streaming
+                setTimeout(() => scrollToBottom("auto"), 0);
+              } else if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (e) {
+              console.error("Lỗi parse chunk:", e);
+            }
+          }
+        }
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Đã có lỗi xảy ra.";
-      setMessages((prev) => [...prev, { role: "bot", text: errorMessage }]);
+      setMessages((prev) => {
+        const newMsgs = [...prev];
+        newMsgs[newMsgs.length - 1] = { ...newMsgs[newMsgs.length - 1], text: errorMessage };
+        return newMsgs;
+      });
     } finally {
       setLoading(false);
       removeFile();
@@ -300,15 +342,22 @@ export default function HomePage() {
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
-        if (parsed.length) setMessages(parsed);
-      } catch (e) { console.error(e); }
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+        }
+      } catch (e) {
+        console.error("Lỗi đọc lịch sử chat:", e);
+      }
     }
+    setHasLoaded(true); // Mark as loaded
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    if (hasLoaded) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    }
     scrollToBottom();
-  }, [messages]);
+  }, [messages, loading, hasLoaded]);
 
   return (
     <>
@@ -331,13 +380,14 @@ export default function HomePage() {
               )}
               {message.imageUrl && (
                 <div style={{ marginBottom: 8 }}>
-                  <img src={message.imageUrl} alt="upload" style={{ width: 224, height: 224, objectFit: "cover", borderRadius: 12 }} />
+                  <img src={message.imageUrl} alt="upload" style={{ maxWidth: "100%", width: 224, height: "auto", maxHeight: 224, objectFit: "cover", borderRadius: 12 }} />
                 </div>
               )}
               <MarkdownText text={message.text} />
             </div>
           ))}
           {loading && <div className="message bot">{loadingText}</div>}
+          <div ref={messagesEndRef} />
         </div>
 
         <div className="composer-container">

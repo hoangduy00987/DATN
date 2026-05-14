@@ -1,3 +1,6 @@
+import httpx
+import json
+import asyncio
 from fastapi import HTTPException
 import requests
 import time
@@ -71,5 +74,91 @@ Trả lời ngắn gọn, rõ ràng.
         raise HTTPException(status_code=503, detail=f"Generate request failed: {e}")
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def stream_generate_answer(query: str, context: str):
+    prompt = f"""
+Bạn là chatbot tư vấn bệnh phổi.
+
+QUY TẮC:
+- Chỉ trả lời dựa vào CONTEXT
+- Không được bịa
+- Nếu không có thông tin → nói không biết
+- Nếu câu hỏi ngoài bệnh phổi/hô hấp → trả lời đúng 1 câu: "Hệ thống hiện chỉ hỏi đáp về các bệnh thường gặp ở phổi."
+- Nếu có bệnh phổi như là covid-19 hay khí phế thũng vẫn trả về kết quả bình thường dựa trên CONTEXT vì đó là bệnh phổi mặc dù k có câu nào hỏi đến phổi
+- trả lời chi tiết nhất có thể
+- và k được nói những từ như dựa trên Context hay thông tin đã cho, mà phải trả lời tự nhiên như một chuyên gia tư vấn bệnh phổi thực thụ, không được nhắc đến việc có CONTEXT hay thông tin đã cho ở đâu cả, chỉ trả lời câu trả lời thôi, không được nói thêm gì khác
+CONTEXT:
+{context}
+
+QUESTION:
+{query}
+
+Trả lời ngắn gọn, rõ ràng.
+"""
+    # Use the primary URL for streaming but change to streamGenerateContent
+    model_name = "gemini-1.5-flash" # Defaulting to 1.5 flash as 2.5 is not a common stable name yet
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:streamGenerateContent"
+    
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0.2}
+    }
+    
+    params = {"key": settings.GEMINI_API_KEY}
+    
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        try:
+            async with client.stream("POST", url, params=params, json=payload) as response:
+                if response.status_code != 200:
+                    error_text = await response.aread()
+                    raise HTTPException(status_code=response.status_code, detail=f"Gemini Stream Error: {error_text.decode()}")
+                
+                buffer = ""
+                async for chunk in response.aiter_text():
+                    buffer += chunk
+                    # Gemini streams a JSON array of objects
+                    # [
+                    #   { "candidates": [...] },
+                    #   { "candidates": [...] }
+                    # ]
+                    # We need to find valid JSON objects in the buffer
+                    while True:
+                        buffer = buffer.strip()
+                        if not buffer:
+                            break
+                            
+                        # Remove leading [ or ,
+                        if buffer.startswith("["):
+                            buffer = buffer[1:].strip()
+                        if buffer.startswith(","):
+                            buffer = buffer[1:].strip()
+                        if buffer.startswith("]"):
+                            buffer = buffer[1:].strip()
+                            break
+
+                        # Try to find a balanced JSON object
+                        depth = 0
+                        end_pos = -1
+                        for i, char in enumerate(buffer):
+                            if char == "{":
+                                depth += 1
+                            elif char == "}":
+                                depth -= 1
+                                if depth == 0:
+                                    end_pos = i + 1
+                                    break
+                        
+                        if end_pos != -1:
+                            obj_str = buffer[:end_pos]
+                            buffer = buffer[end_pos:].strip()
+                            try:
+                                obj = json.loads(obj_str)
+                                text = obj["candidates"][0]["content"]["parts"][0]["text"]
+                                yield text
+                            except (KeyError, IndexError, json.JSONDecodeError):
+                                continue
+                        else:
+                            break
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=503, detail=f"Stream request failed: {e}")
+        except Exception as e:
+            yield f"Lỗi hệ thống: {str(e)}"

@@ -5,8 +5,11 @@ from app.db.models import User
 from app.models.chat_request import ChatRequest
 from app.models.chat_response import ChatResponse
 from app.services.retrieval_service import retrieve
-from app.services.generation_service import generate_answer
+from app.services.generation_service import generate_answer, stream_generate_answer
 from app.db.chroma_client import load_db
+from fastapi.responses import StreamingResponse
+import asyncio
+import json
 from app.services.detection_service import DetectionModel, XRayCheckModel
 from PIL import Image
 import io
@@ -105,6 +108,40 @@ async def chat(request: ChatRequest, current_user: User = Depends(get_current_do
     answer = generate_answer(query, context)
 
     return ChatResponse(answer=answer)
+
+
+@router.post("/chat-stream")
+async def chat_stream(request: ChatRequest, current_user: User = Depends(get_current_doctor)):
+    collection = load_db()
+    query = request.query
+
+    if not query:
+        raise HTTPException(status_code=400, detail="Query cannot be empty.")
+
+    if not is_lung_scope(query):
+        async def scope_gen():
+            yield f"data: {json.dumps({'text': OUT_OF_SCOPE_MESSAGE})}\n\n"
+        return StreamingResponse(scope_gen(), media_type="text/event-stream")
+
+    docs = retrieve(collection, query)
+
+    if not docs:
+        async def empty_gen():
+            yield f"data: {json.dumps({'text': 'Không tìm thấy thông tin phù hợp.'})}\n\n"
+        return StreamingResponse(empty_gen(), media_type="text/event-stream")
+
+    context = build_context(docs)
+
+    async def event_generator():
+        try:
+            async for chunk in stream_generate_answer(query, context):
+                if chunk:
+                    # Send chunk as JSON in data field
+                    yield f"data: {json.dumps({'text': chunk})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
 @router.post("/chat-with-image", response_model=ChatResponse)

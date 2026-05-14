@@ -3,17 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, useRef, type ReactNode } from "react";
 
 const patientNavItems = [
   { href: "/chat/dat-lich", label: "Đặt lịch khám bệnh", icon: "calendar" as const },
+  { href: "/chat/lich-da-dat", label: "Danh sách lịch khám", icon: "list" as const },
   { href: "/chat/ket-qua", label: "Kết quả khám bệnh", icon: "clipboard" as const },
 ];
 
 const doctorNavItems = [
   { href: "/chat", label: "AI tư vấn", icon: "sparkles" as const },
   { href: "/chat/lich-kham", label: "Danh sách lịch khám", icon: "list" as const },
-  { href: "/chat/duyet-tu-van", label: "Duyệt dữ liệu tư vấn", icon: "fileReview" as const },
 ];
 
 function NavIcon({ name }: { name: "calendar" | "clipboard" | "sparkles" | "list" | "fileReview" }) {
@@ -68,6 +68,28 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [sessionRole, setSessionRole] = useState<string | null | undefined>(undefined);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  // Sync sidebar width to CSS variable for fixed composer positioning
+  useEffect(() => {
+    if (typeof window === "undefined" || !sidebarRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        // On mobile top-nav, we don't want to offset the composer by width
+        if (window.innerWidth > 768) {
+          document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
+        } else {
+          document.documentElement.style.setProperty("--sidebar-width", "0px");
+        }
+      }
+    });
+
+    observer.observe(sidebarRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,7 +123,11 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="chat-app-shell">
-      <aside className="chat-sidebar" aria-label="Menu điều hướng">
+      <aside
+        ref={sidebarRef}
+        className={`chat-sidebar${isCollapsed ? " collapsed" : ""}`}
+        aria-label="Menu điều hướng"
+      >
         <div className="chat-sidebar-brand">
           <Link href={brandHref}>
             <Image
@@ -148,13 +174,38 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
         ) : null}
 
         <div className="chat-sidebar-footer">
-          <button type="button" className="chat-sidebar-logout" onClick={handleLogout} disabled={logoutLoading}>
+          <button
+            type="button"
+            className="chat-sidebar-logout"
+            onClick={handleLogout}
+            disabled={logoutLoading}
+          >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
-            {logoutLoading ? "Đang đăng xuất…" : "Đăng xuất"}
+            <span>{logoutLoading ? "Đang đăng xuất…" : "Đăng xuất"}</span>
+          </button>
+
+          <button
+            type="button"
+            className="chat-sidebar-toggle"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+          >
+            {isCollapsed ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M15 3v18" />
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" />
+                <path d="M9 3v18" />
+              </svg>
+            )}
+            <span>{isCollapsed ? "Mở rộng" : "Thu gọn"}</span>
           </button>
         </div>
       </aside>

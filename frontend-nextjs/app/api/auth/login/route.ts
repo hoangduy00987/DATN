@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
         response.cookies.set({
             name: "access_token",
             value: data.access_token,
-            httpOnly: true,
+            httpOnly: false, // Allow JS access
             path: "/",
             maxAge: 60 * 60, // 1 hour
             sameSite: "strict",
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
         response.cookies.set({
             name: "refresh_token",
             value: data.refresh_token,
-            httpOnly: true,
+            httpOnly: false, // Allow JS access
             path: "/",
             maxAge: 7 * 24 * 60 * 60, // 7 days
             sameSite: "strict",
