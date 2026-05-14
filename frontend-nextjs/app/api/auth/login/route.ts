@@ -31,7 +31,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ detail: data.detail || "Đăng nhập thất bại" }, { status: backendResponse.status });
         }
 
-        const response = NextResponse.json({ success: true });
+        const role =
+            typeof data.role === "string" && ["doctor", "patient", "admin"].includes(data.role)
+                ? data.role
+                : "patient";
+
+        const response = NextResponse.json({ success: true, role });
 
         // Set HTTPOnly Cookie for access_token (1 hour)
         response.cookies.set({
@@ -50,6 +55,15 @@ export async function POST(request: NextRequest) {
             httpOnly: true,
             path: "/",
             maxAge: 7 * 24 * 60 * 60, // 7 days
+            sameSite: "strict",
+        });
+
+        response.cookies.set({
+            name: "user_role",
+            value: role,
+            httpOnly: true,
+            path: "/",
+            maxAge: 7 * 24 * 60 * 60,
             sameSite: "strict",
         });
 
