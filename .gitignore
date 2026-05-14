@@ -19,3 +19,11 @@ frontend-nextjs/.next/
 frontend-nextjs/node_modules/
 frontend-nextjs/.env
 frontend-nextjs/out/
+
+# Database / Migrations
+alembic.ini
+migrations/
+alembic/
+*.db
+*.sqlite3
+pgdata/

@@ -27,6 +27,8 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get("content-type");
     const headers: Record<string, string> = {};
     if (contentType) headers["content-type"] = contentType;
+    const token = request.cookies.get("access_token")?.value;
+    if (token) headers["Authorization"] = `Bearer ${token}`;
 
     const backendResponse = await fetch(BACKEND_CHAT_UPLOAD_URL, {
       method: "POST",

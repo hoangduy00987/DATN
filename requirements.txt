@@ -9,3 +9,11 @@ Pillow>=10.0.0
 tensorflow
 PyPDF2
 python-docx
+# DB
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.29
+# Auth
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==4.0.1
+python-multipart

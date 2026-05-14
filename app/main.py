@@ -1,13 +1,58 @@
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+import logging
+import os
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from app.db.session import SessionLocal, engine
+from app.db.models import Base, User, RoleEnum
+from app.core.security import get_password_hash
+from app.api.v1.auth import router as auth_router
 from app.api.v1.chat import router as chat_router
 from app.api.v1.detect import router as detect_router
 from app.api.v1.ingest import router as ingest_router
 
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-import logging
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure tables are created (useful if docker init.sql didn't run or is missing)
+    Base.metadata.create_all(bind=engine)
+    
+    db = SessionLocal()
+    try:
+        doctor_email = os.getenv("DEFAULT_DOCTOR_EMAIL", "doctor@admin.com")
+        doctor_password = os.getenv("DEFAULT_DOCTOR_PASSWORD", "Lungcare2026")
+        doctor_name = os.getenv("DEFAULT_DOCTOR_NAME", "Dr. Admin")
+        
+        # Check if default doctor exists
+        doctor = db.query(User).filter(User.email == doctor_email).first()
+        if not doctor:
+            # Truncate password to bcrypt limit (72 bytes) before hashing
+            safe_password = doctor_password[:72] if len(doctor_password.encode()) > 72 else doctor_password
+            new_doctor = User(
+                email=doctor_email,
+                full_name=doctor_name,
+                password_hash=get_password_hash(safe_password),
+                role=RoleEnum.doctor
+            )
+            db.add(new_doctor)
+            db.commit()
+            print(f"Default doctor {doctor_email} created!")
+    finally:
+        db.close()
+    yield
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
+
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
@@ -21,6 +66,7 @@ async def validation_exception_handler(request, exc):
         },
     )
 
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])
 app.include_router(detect_router, prefix="/api/v1/detect", tags=["detect"])
 app.include_router(ingest_router, prefix="/api/v1/ingest", tags=["ingest"])

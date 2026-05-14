@@ -11,3 +11,22 @@ services:
     volumes:
       - ./data:/app/data
     restart: unless-stopped
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15-alpine
+    container_name: lung_postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: lung_admin
+      POSTGRES_PASSWORD: lung_password
+      POSTGRES_DB: lung_system_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db_init:/docker-entrypoint-initdb.d
+
+volumes:
+  postgres_data:

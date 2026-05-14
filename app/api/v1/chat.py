@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
 from app.core.config import settings
+from app.core.security import get_current_doctor
+from app.db.models import User
 from app.models.chat_request import ChatRequest
 from app.models.chat_response import ChatResponse
 from app.services.retrieval_service import retrieve
@@ -84,7 +86,7 @@ def build_context(docs: list[dict]) -> str:
     return "\n\n---\n\n".join(sections)
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, current_user: User = Depends(get_current_doctor)):
     collection = load_db()
     query = request.query
 
@@ -106,7 +108,7 @@ async def chat(request: ChatRequest):
 
 
 @router.post("/chat-with-image", response_model=ChatResponse)
-async def chat_with_image(file: UploadFile = File(None), image_base64: str = Form(None), query: str = Form(None)):
+async def chat_with_image(file: UploadFile = File(None), image_base64: str = Form(None), query: str = Form(None), current_user: User = Depends(get_current_doctor)):
     """Accepts an uploaded image (or base64) plus optional query.
 
     If an image is provided, run the detection model first and use the
@@ -206,7 +208,7 @@ async def chat_with_image(file: UploadFile = File(None), image_base64: str = For
 
 
 @router.post("/upload", response_model=ChatResponse)
-async def upload(file: UploadFile = File(None), image_base64: str = Form(None), query: str = Form(None)):
+async def upload(file: UploadFile = File(None), image_base64: str = Form(None), query: str = Form(None), current_user: User = Depends(get_current_doctor)):
     """Backward-compatible alias for clients that POST to `/upload`.
 
     Delegates to `chat_with_image` to keep a single implementation.

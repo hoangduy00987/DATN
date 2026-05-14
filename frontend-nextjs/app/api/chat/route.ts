@@ -14,9 +14,15 @@ export async function POST(request: NextRequest) {
     if (!BACKEND_CHAT_URL) {
       return NextResponse.json({ detail: "Backend chat URL is not configured." }, { status: 500 });
     }
+
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    // Get token from cookie
+    const token = request.cookies.get("access_token")?.value;
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
     const response = await fetch(BACKEND_CHAT_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ query }),
       cache: "no-store",
     });

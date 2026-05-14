@@ -4,6 +4,9 @@ from app.services.detection_service import DetectionModel, XRayCheckModel
 from PIL import Image
 import io
 import base64
+from fastapi import Depends
+from app.core.security import get_current_doctor
+from app.db.models import User
 
 router = APIRouter()
 
@@ -13,7 +16,7 @@ xray_checker = XRayCheckModel(settings.XRAY_CHECK_MODEL_PATH)
 
 
 @router.post("/", tags=["detect"])
-async def detect(file: UploadFile = File(None), image_base64: str = Form(None)):
+async def detect(file: UploadFile = File(None), image_base64: str = Form(None), current_user: User = Depends(get_current_doctor)):
     if file is None and not image_base64:
         raise HTTPException(status_code=400, detail="Provide 'file' or 'image_base64'.")
 

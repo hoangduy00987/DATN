@@ -60,11 +60,11 @@ def format_record(raw_record: dict) -> dict:
         }
     }
 
-def process_and_ingest(records: list[dict]):
+def process_and_ingest(records: list[dict]) -> bool:
     """Process records and ingest them into ChromaDB."""
     if not GEMINI_API_KEY:
         print("❌ Missing GEMINI_API_KEY")
-        return
+        return False
 
     total = 0
     skipped = 0
@@ -107,6 +107,7 @@ def process_and_ingest(records: list[dict]):
             skipped += 1
 
     print(f"\n🎉 Background Ingestion DONE: {total} processed, {skipped} skipped.")
+    return total > 0
 
 def ingest():
     """Legacy ingest function for reading from file."""
@@ -158,11 +159,11 @@ def process_file_and_ingest(file_content: bytes, filename: str):
         text = extract_text_from_docx(file_content)
     else:
         print(f"⚠️ Unsupported file extension: {ext}")
-        return
+        return False
 
     if not text.strip():
         print(f"⚠️ No text extracted from {filename}")
-        return
+        return False
 
     # Chunk text into segments of ~1000 characters
     chunk_size = 1000
@@ -183,6 +184,6 @@ def process_file_and_ingest(file_content: bytes, filename: str):
             }
         })
     
-    process_and_ingest(records)
+    return process_and_ingest(records)
 
 __all__ = ["process_and_ingest", "ingest", "process_file_and_ingest"]
