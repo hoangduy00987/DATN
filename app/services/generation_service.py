@@ -13,8 +13,21 @@ GEN_URLS = [
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
 MAX_RETRIES = 3
 
-def generate_answer(query: str, context: str):
-    prompt = f"""
+
+def _gen_url_to_stream_url(gen_url: str) -> str:
+    """Cùng model với GEN_URL: ...:generateContent -> ...:streamGenerateContent"""
+    if ":streamGenerateContent" in gen_url:
+        return gen_url
+    if ":generateContent" in gen_url:
+        return gen_url.replace(":generateContent", ":streamGenerateContent")
+    raise ValueError(
+        "GEN_URL phải chứa ':generateContent' (ví dụ .../models/gemini-2.5-flash:generateContent)"
+    )
+
+
+def _build_lung_chat_prompt(query: str, context: str) -> str:
+    """Prompt dùng chung cho generate (sync) và stream — không sửa đổi logic ngoài khối này."""
+    return f"""
 Bạn là chatbot tư vấn bệnh phổi.
 
 QUY TẮC:
@@ -25,6 +38,7 @@ QUY TẮC:
 - Nếu có bệnh phổi như là covid-19 hay khí phế thũng vẫn trả về kết quả bình thường dựa trên CONTEXT vì đó là bệnh phổi mặc dù k có câu nào hỏi đến phổi
 - trả lời chi tiết nhất có thể
 - và k được nói những từ như dựa trên Context hay thông tin đã cho, mà phải trả lời tự nhiên như một chuyên gia tư vấn bệnh phổi thực thụ, không được nhắc đến việc có CONTEXT hay thông tin đã cho ở đâu cả, chỉ trả lời câu trả lời thôi, không được nói thêm gì khác
+- Trả lời bằng tiếng Việt đúng chính tả, dấu câu hợp lý; có thể chỉnh cách diễn đạt cho mạch lạc nhưng không được tự ý thêm, bớt hay thay đổi ý nghĩa y học so với CONTEXT (tên bệnh, liều, chỉ định… phải trùng với nội dung CONTEXT nếu có).
 CONTEXT:
 {context}
 
@@ -33,6 +47,10 @@ QUESTION:
 
 Trả lời ngắn gọn, rõ ràng.
 """
+
+
+def generate_answer(query: str, context: str):
+    prompt = _build_lung_chat_prompt(query, context)
 
     try:
         last_response = None
@@ -74,30 +92,13 @@ Trả lời ngắn gọn, rõ ràng.
         raise HTTPException(status_code=503, detail=f"Generate request failed: {e}")
     except HTTPException:
         raise
+
+
 async def stream_generate_answer(query: str, context: str):
-    prompt = f"""
-Bạn là chatbot tư vấn bệnh phổi.
+    prompt = _build_lung_chat_prompt(query, context)
+    # Cùng model với generate_answer / biến môi trường GEN_URL (không hardcode gemini-1.5)
+    url = _gen_url_to_stream_url(settings.GEN_URL)
 
-QUY TẮC:
-- Chỉ trả lời dựa vào CONTEXT
-- Không được bịa
-- Nếu không có thông tin → nói không biết
-- Nếu câu hỏi ngoài bệnh phổi/hô hấp → trả lời đúng 1 câu: "Hệ thống hiện chỉ hỏi đáp về các bệnh thường gặp ở phổi."
-- Nếu có bệnh phổi như là covid-19 hay khí phế thũng vẫn trả về kết quả bình thường dựa trên CONTEXT vì đó là bệnh phổi mặc dù k có câu nào hỏi đến phổi
-- trả lời chi tiết nhất có thể
-- và k được nói những từ như dựa trên Context hay thông tin đã cho, mà phải trả lời tự nhiên như một chuyên gia tư vấn bệnh phổi thực thụ, không được nhắc đến việc có CONTEXT hay thông tin đã cho ở đâu cả, chỉ trả lời câu trả lời thôi, không được nói thêm gì khác
-CONTEXT:
-{context}
-
-QUESTION:
-{query}
-
-Trả lời ngắn gọn, rõ ràng.
-"""
-    # Use the primary URL for streaming but change to streamGenerateContent
-    model_name = "gemini-1.5-flash" # Defaulting to 1.5 flash as 2.5 is not a common stable name yet
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:streamGenerateContent"
-    
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {"temperature": 0.2}

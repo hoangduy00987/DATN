@@ -251,3 +251,92 @@ async def upload(file: UploadFile = File(None), image_base64: str = Form(None), 
     Delegates to `chat_with_image` to keep a single implementation.
     """
     return await chat_with_image(file=file, image_base64=image_base64, query=query)
+
+
+@router.post("/upload-stream")
+async def upload_stream(
+    file: UploadFile = File(None),
+    image_base64: str = Form(None),
+    query: str = Form(None),
+    current_user: User = Depends(get_current_doctor),
+):
+    """Giống `/upload` nhưng trả lời SSE (`data: {"text": "..."}`) như `/chat-stream`."""
+    collection = load_db()
+    user_query = (query or "").strip()
+    label = None
+    score = None
+
+    if file is None and not image_base64:
+        raise HTTPException(status_code=400, detail="Cần có ảnh để phân tích.")
+
+    try:
+        if file is not None:
+            content = await file.read()
+            image = Image.open(io.BytesIO(content))
+        else:
+            import base64
+
+            data = image_base64.split(",")[-1] if "," in image_base64 else image_base64
+            content = base64.b64decode(data)
+            image = Image.open(io.BytesIO(content))
+
+        is_xray, _xray_score = xray_checker.is_xray(image)
+        if not is_xray:
+            raise HTTPException(
+                status_code=400,
+                detail="Vui lòng đưa ảnh X-quang phổi vào để tiến hành nhận diện.",
+            )
+
+        label, score = detector.predict(image)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Detection failed: {e}")
+
+    retrieval_label = label or ""
+    special_prefix = ""
+    if retrieval_label:
+        low = _normalize_text(retrieval_label)
+        if any(k in low for k in ["covid", "covid-19", "covid19", "khi phe thung", "phe thung", "emphysema"]):
+            special_prefix = "bệnh phổi do"
+
+    if user_query:
+        if retrieval_label and retrieval_label != "unknown":
+            retrieval_query = f"{special_prefix} {retrieval_label}. {user_query}".strip()
+        else:
+            retrieval_query = user_query
+    else:
+        retrieval_query = f"{special_prefix} {retrieval_label}".strip()
+
+    if not retrieval_query:
+        raise HTTPException(status_code=400, detail="No query available for retrieval.")
+
+    docs = retrieve(collection, retrieval_query)
+
+    if not docs:
+        if user_query and not is_lung_scope(user_query):
+
+            async def scope_gen():
+                yield f"data: {json.dumps({'text': OUT_OF_SCOPE_MESSAGE})}\n\n"
+
+            return StreamingResponse(scope_gen(), media_type="text/event-stream")
+
+        async def empty_gen():
+            yield f"data: {json.dumps({'text': 'Không tìm thấy thông tin phù hợp.'})}\n\n"
+
+        return StreamingResponse(empty_gen(), media_type="text/event-stream")
+
+    context = build_context(docs)
+    note = f"[Phát hiện: {label} (score={score})] " if label else ""
+
+    async def event_generator():
+        try:
+            if note:
+                yield f"data: {json.dumps({'text': note})}\n\n"
+            async for chunk in stream_generate_answer(retrieval_query, context):
+                if chunk:
+                    yield f"data: {json.dumps({'text': chunk})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream")

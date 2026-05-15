@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState, useRef, type ReactNode } from "react";
 
 const patientNavItems = [
   { href: "/chat/dat-lich", label: "Đặt lịch khám bệnh", icon: "calendar" as const },
@@ -71,25 +71,33 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
 
-  // Sync sidebar width to CSS variable for fixed composer positioning
-  useEffect(() => {
-    if (typeof window === "undefined" || !sidebarRef.current) return;
+  // Đồng bộ độ rộng sidebar → --sidebar-width (composer `left`) — tránh chồng lên sidebar
+  useLayoutEffect(() => {
+    const el = sidebarRef.current;
+    if (typeof window === "undefined" || !el) return;
 
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const width = entry.contentRect.width;
-        // On mobile top-nav, we don't want to offset the composer by width
-        if (window.innerWidth > 768) {
-          document.documentElement.style.setProperty("--sidebar-width", `${width}px`);
-        } else {
-          document.documentElement.style.setProperty("--sidebar-width", "0px");
-        }
+    const apply = () => {
+      const width = el.getBoundingClientRect().width;
+      if (window.innerWidth > 768) {
+        document.documentElement.style.setProperty("--sidebar-width", `${Math.round(width)}px`);
+      } else {
+        document.documentElement.style.setProperty("--sidebar-width", "0px");
       }
-    });
+    };
 
-    observer.observe(sidebarRef.current);
-    return () => observer.disconnect();
-  }, []);
+    apply();
+
+    const observer = new ResizeObserver(() => {
+      apply();
+    });
+    observer.observe(el);
+    window.addEventListener("resize", apply);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", apply);
+    };
+  }, [isCollapsed]);
 
   useEffect(() => {
     let cancelled = false;

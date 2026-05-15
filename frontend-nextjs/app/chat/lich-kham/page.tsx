@@ -13,6 +13,8 @@ interface Appointment {
 }
 
 export default function LichKhamDoctorPage() {
+  const today = new Date().toISOString().split("T")[0];
+
   const getCookie = (name: string) => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -26,7 +28,7 @@ export default function LichKhamDoctorPage() {
   
   // Doctor Filter States
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().split("T")[0]);
+  const [filterDate, setFilterDate] = useState(today);
   const [filterStatus, setFilterStatus] = useState("booked");
 
   // Modal States
@@ -52,7 +54,8 @@ export default function LichKhamDoctorPage() {
       if (filterStatus && filterStatus !== "all") params.append("status", filterStatus);
       if (searchTerm.trim()) params.append("search", searchTerm.trim());
       
-      const response = await fetch(`http://localhost:8000/api/v1/appointments/all?${params.toString()}`, {
+      const queryString = params.toString();
+      const response = await fetch(`http://localhost:8000/api/v1/appointments/all${queryString ? `?${queryString}` : ""}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
 
@@ -71,10 +74,17 @@ export default function LichKhamDoctorPage() {
     fetchAppointments();
   }, [filterDate, filterStatus]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchAppointments();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const handleClearAllFilters = () => {
     setSearchTerm("");
-    setFilterDate("");
-    setFilterStatus("all");
+    setFilterDate(today);
+    setFilterStatus("booked");
     // useEffect will trigger fetch because filterDate/Status changed
   };
 
@@ -187,10 +197,6 @@ export default function LichKhamDoctorPage() {
           </div>
 
           <div className="toolbar-actions-v5">
-            <button className="btn-main-v5 btn-find-v5" onClick={fetchAppointments}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <span>Tìm kiếm</span>
-            </button>
             <button className="btn-main-v5 btn-reset-v5" onClick={handleClearAllFilters} title="Xóa tất cả bộ lọc">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
               <span>Xóa lọc</span>
@@ -260,50 +266,55 @@ export default function LichKhamDoctorPage() {
       )}
 
       <style jsx>{`
-        .premium-ui { background: #f1f5f9; font-family: Arial, sans-serif !important; min-height: 100vh; padding: 24px; }
+        .premium-ui { background: #f1f5f9; font-family: Arial, sans-serif !important; min-height: 100vh; padding: 15px; }
         
         .toast-premium-container { position: fixed; top: 24px; right: 24px; z-index: 3000; animation: slideIn 0.3s ease; }
         .toast-premium-card { background: #0f172a; color: white; padding: 12px 20px; border-radius: 8px; display: flex; align-items: center; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .toast-icon { background: #10b981; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
         @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
-        .appointment-card { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 32px; max-width: 1200px; margin: 0 auto; }
+        .appointment-card { background: white; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; width: 100%; max-width: none; margin: 0; min-width: 0; }
         .appointment-header-v2 { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; border-bottom: 1px solid #f1f5f9; padding-bottom: 24px; }
         .header-icon-main { width: 44px; height: 44px; background: #059669; color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
         .header-text-main h1 { font-size: 1.4rem; margin: 0; color: #0f172a; }
         .header-text-main p { margin: 4px 0 0; color: #64748b; font-size: 0.85rem; }
 
-        .doctor-toolbar-v5 { display: flex; gap: 16px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 24px; align-items: flex-end; flex-wrap: wrap; }
+        .doctor-toolbar-v5 { display: grid; grid-template-columns: minmax(260px, 1.5fr) minmax(220px, 1fr) minmax(180px, 0.8fr) auto; gap: 18px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 24px; align-items: end; }
         .toolbar-item-v5 { display: flex; flex-direction: column; gap: 6px; }
         .item-label-v5 { font-size: 0.8rem; font-weight: 700; color: #475569; }
         
-        .search-box-v5 { width: 200px; }
+        .search-box-v5 { width: 100%; }
         .input-wrap-v5 { position: relative; display: flex; align-items: center; }
         .search-icon-v5 { position: absolute; left: 12px; color: #94a3b8; }
         .input-wrap-v5 input { width: 100%; padding: 10px 32px 10px 36px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; outline: none; transition: 0.2s; }
 
-        .date-box-v5 { width: 180px; }
+        .date-box-v5 { width: 100%; }
         .date-box-v5-inner { position: relative; height: 40px; cursor: pointer; }
         .hidden-date-v5 { position: absolute; inset: 0; opacity: 0; z-index: 5; pointer-events: none; }
         .display-layer-v5 { position: absolute; inset: 0; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.85rem; font-weight: 600; color: #1e293b; z-index: 1; }
 
-        .status-box-v5 { width: 150px; }
+        .status-box-v5 { width: 100%; }
         .select-wrap-v5 { position: relative; display: flex; align-items: center; }
         .status-select-v5 { width: 100%; height: 40px; padding: 0 28px 0 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; font-weight: 600; outline: none; cursor: pointer; appearance: none; }
 
         .btn-clear-mini { position: absolute; right: 8px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #e2e8f0; color: #64748b; border: none; border-radius: 50%; font-size: 14px; cursor: pointer; z-index: 10; transition: 0.2s; }
         .btn-clear-mini:hover { background: #ef4444; color: white; }
 
-        .toolbar-actions-v5 { flex: 1; display: flex; justify-content: flex-end; gap: 12px; }
+        .toolbar-actions-v5 { display: flex; justify-content: flex-end; gap: 12px; align-items: flex-end; }
         .btn-main-v5 { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 20px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; border: none; transition: 0.2s; }
-        .btn-find-v5 { background: #059669; color: white; min-width: 120px; }
-        .btn-find-v5:hover { background: #047857; transform: translateY(-1px); }
-        .btn-reset-v5 { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .btn-reset-v5 { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; min-width: 140px; justify-content: center; }
         .btn-reset-v5:hover { background: #fee2e2; color: #ef4444; }
 
-        .table-responsive-v5 { overflow-x: auto; }
+        @media (max-width: 900px) {
+          .doctor-toolbar-v5 { grid-template-columns: 1fr 1fr; }
+          .toolbar-actions-v5 { justify-content: stretch; }
+          .btn-reset-v5 { width: 100%; }
+        }
+
+        .content-area { min-width: 0; }
+        .table-responsive-v5 { width: 100%; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
         .doctor-table-v5 { width: 100%; border-collapse: collapse; min-width: 800px; }
-        .doctor-table-v5 th { text-align: left; padding: 12px 16px; font-size: 0.8rem; color: #64748b; font-weight: 700; border-bottom: 2px solid #f1f5f9; text-transform: uppercase; letter-spacing: 0.05em; }
+        .doctor-table-v5 th { text-align: left; padding: 12px 16px; font-size: 0.8rem; color: #64748b; font-weight: 700; border-bottom: 2px solid #f1f5f9; text-transform: none; letter-spacing: 0; }
         .doctor-table-v5 td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .row-hover-v5:hover { background: #f8fafc; }
         .status-cell-v5 { text-align: center; padding: 80px !important; color: #94a3b8; font-weight: 600; font-size: 1.1rem; }
@@ -324,6 +335,77 @@ export default function LichKhamDoctorPage() {
         .btn-detail-v5:hover { background: #3b82f6; color: white; transform: translateY(-1px); }
         .btn-send-v5 { background: #f1f5f9; color: #059669; }
         .btn-send-v5:hover { background: #059669; color: white; transform: translateY(-1px); }
+
+        @media (max-width: 1024px) {
+          .premium-ui { padding: 15px; }
+          .appointment-card { padding: 15px; border-radius: 12px; }
+          .appointment-header-v2 { margin-bottom: 20px; padding-bottom: 18px; }
+          .header-title-section { gap: 12px; align-items: flex-start; }
+          .header-icon-main { width: 38px; height: 38px; border-radius: 9px; flex-shrink: 0; }
+          .header-text-main h1 { font-size: 1.1rem; line-height: 1.3; }
+          .header-text-main p { font-size: 0.8rem; line-height: 1.45; }
+          .doctor-toolbar-v5 { grid-template-columns: 1fr; padding: 14px; gap: 14px; }
+          .table-responsive-v5 { overflow-x: visible; }
+          .doctor-table-v5,
+          .doctor-table-v5 thead,
+          .doctor-table-v5 tbody,
+          .doctor-table-v5 tr,
+          .doctor-table-v5 td {
+            display: block;
+            width: 100%;
+          }
+          .doctor-table-v5 { min-width: 0; border-collapse: separate; border-spacing: 0; }
+          .doctor-table-v5 thead { display: none; }
+          .doctor-table-v5 tr {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #ffffff;
+          }
+          .doctor-table-v5 td {
+            display: grid;
+            grid-template-columns: 96px minmax(0, 1fr);
+            gap: 12px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+          }
+          .doctor-table-v5 td:last-child { border-bottom: none; }
+          .doctor-table-v5 td::before {
+            color: #64748b;
+            font-size: 0.78rem;
+            font-weight: 700;
+          }
+          .doctor-table-v5 td:nth-child(1)::before { content: "Bệnh nhân"; }
+          .doctor-table-v5 td:nth-child(2)::before { content: "Liên lạc"; }
+          .doctor-table-v5 td:nth-child(3)::before { content: "Thời gian"; }
+          .doctor-table-v5 td:nth-child(4)::before { content: "Trạng thái"; }
+          .doctor-table-v5 td:nth-child(5)::before { content: "Hành động"; align-self: start; padding-top: 8px; }
+          .status-cell-v5 {
+            display: block !important;
+            padding: 36px 12px !important;
+            border-bottom: none !important;
+          }
+          .status-cell-v5::before { display: none; }
+          .name-bold,
+          .tag-phone,
+          .day-text,
+          .pill-status {
+            max-width: 100%;
+            overflow-wrap: anywhere;
+          }
+          .action-btns-v5 {
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+          .btn-act {
+            min-width: 0;
+            flex: 1 1 130px;
+            justify-content: center;
+            padding: 0 10px;
+          }
+        }
 
         .modal-mask { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
         .modal-container-v5 { background: white; width: 95%; max-width: 550px; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }

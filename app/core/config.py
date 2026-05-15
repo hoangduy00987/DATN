@@ -8,8 +8,14 @@ class Config:
     CHROMA_DIR = "./data/chroma_db"
     COLLECTION_NAME = "lung_rag"
     INPUT_FILE = "data/processed/output_rag_ready.jsonl"
-    EMBED_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent"
-    GEN_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    EMBED_URL = os.getenv(
+        "EMBED_URL",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent",
+    )
+    GEN_URL = os.getenv(
+        "GEN_URL",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    )
     # Detection model configuration (leave empty; user will provide path later)
     DETECTION_MODEL_PATH = os.getenv("DETECTION_MODEL_PATH", "")
     XRAY_CHECK_MODEL_PATH = os.getenv("XRAY_CHECK_MODEL_PATH", "")

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, date as date_type
@@ -59,19 +60,26 @@ def get_all_appointments(
     if current_user.role not in [RoleEnum.doctor, RoleEnum.admin]:
         raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập danh sách này.")
     
-    query = db.query(Appointment)
+    query = db.query(Appointment).join(Appointment.patient)
+    search_value = search.strip() if search else ""
     
     # Filter theo ngày nếu có
     if date:
         query = query.filter(Appointment.appointment_date == date)
     
     # Filter theo trạng thái nếu có (và khác 'all')
-    if status and status != "all":
+    if status and status.strip() and status != "all":
         query = query.filter(Appointment.status == status)
         
     # Tìm kiếm linh hoạt
-    if search:
-        query = query.filter(Appointment.symptoms.ilike(f"%{search}%"))
+    if search_value:
+        query = query.filter(
+            or_(
+                User.full_name.ilike(f"%{search_value}%"),
+                User.phone.ilike(f"%{search_value}%"),
+                Appointment.symptoms.ilike(f"%{search_value}%"),
+            )
+        )
         
     return query.order_by(Appointment.appointment_date.desc(), Appointment.appointment_time.asc()).all()
 

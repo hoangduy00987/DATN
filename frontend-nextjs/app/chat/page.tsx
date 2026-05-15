@@ -1,6 +1,6 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 type ChatMessage = {
   role: "user" | "bot";
@@ -68,6 +68,7 @@ export default function HomePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const docInputRef = useRef<HTMLInputElement | null>(null);
+  const queryInputRef = useRef<HTMLTextAreaElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -77,21 +78,69 @@ export default function HomePage() {
   ]);
   const STORAGE_KEY = "chat_messages_v1";
   const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
   const [loadingText, setLoadingText] = useState("Đang suy nghĩ...");
   const [hasLoaded, setHasLoaded] = useState(false); // Flag to prevent overwriting during initial load
   const chatRef = useRef<HTMLDivElement>(null);
 
-  const canSend = useMemo(() => query.trim().length > 0 && !loading, [query, loading]);
+  const canSend = useMemo(
+    () => query.trim().length > 0 && !loading && !streaming,
+    [query, loading, streaming]
+  );
 
   const scrollToBottom = (behavior: ScrollBehavior = "auto") => {
     messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
+  /** Tách badge [Phát hiện: ...] khỏi nội dung bot (upload ảnh / stream). */
+  const applyDetectionMetaToLastMessage = (raw: string) => {
+    const detectRegex = /^\[Phát hiện:\s*([^\]]+)\]\s*([\s\S]*)$/;
+    const m = raw.match(detectRegex);
+    let answerText = raw;
+    let meta: ChatMessage["meta"] = null;
+    if (m) {
+      answerText = m[2] || "";
+      const detectContent = m[1] || "";
+      const scoreRegex = /(.+)\(score=([0-9.]+)\)/;
+      const sm = detectContent.match(scoreRegex);
+      if (sm) {
+        const label = sm[1].trim();
+        const score = parseFloat(sm[2]);
+        meta = { detection: { label, score } };
+      } else {
+        meta = { detection: { label: detectContent.trim(), score: null } };
+      }
+    }
+    setMessages((prev) => {
+      const newMsgs = [...prev];
+      const lastIdx = newMsgs.length - 1;
+      if (lastIdx < 0 || newMsgs[lastIdx].role !== "bot") return prev;
+      newMsgs[lastIdx] = { ...newMsgs[lastIdx], text: answerText, meta };
+      return newMsgs;
+    });
+  };
+
+  const fitQueryTextarea = useCallback(() => {
+    const el = queryInputRef.current;
+    if (!el || typeof window === "undefined") return;
+    el.style.height = "0px";
+    const cap = Math.min(window.innerHeight * 0.4, 220);
+    el.style.height = `${Math.min(Math.max(el.scrollHeight, 44), cap)}px`;
+  }, []);
+
+  useLayoutEffect(() => {
+    fitQueryTextarea();
+  }, [query, fitQueryTextarea]);
+
+  useEffect(() => {
+    const onResize = () => fitQueryTextarea();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [fitQueryTextarea]);
+
   const handleSendMessage = async (userText: string, fileToSend: File | null) => {
     if (!userText.trim() && !fileToSend) return;
     setQuery("");
-    setLoadingText("Đang suy nghĩ...");
-    setLoading(true);
 
     if (fileToSend) {
       const readFileAsDataURL = (f: File) =>
@@ -103,52 +152,82 @@ export default function HomePage() {
         });
 
       const dataUrl = await readFileAsDataURL(fileToSend);
-      setMessages((prev) => [...prev, { role: "user", text: userText || "", imageUrl: dataUrl }]);
+      setStreaming(true);
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", text: userText || "", imageUrl: dataUrl },
+        { role: "bot", text: "Đang suy nghĩ..." },
+      ]);
       removeFile();
       try {
         const form = new FormData();
         form.append("file", fileToSend);
         if (userText) form.append("query", userText);
 
-        const res = await fetch("/api/chat/upload", {
+        const res = await fetch("/api/chat/upload-stream", {
           method: "POST",
           body: form,
         });
 
-        const data = await res.json();
         if (res.status === 401 || res.status === 403) {
           window.location.href = "/login";
           throw new Error("Bạn cần đăng nhập để sử dụng tính năng này.");
         }
         if (!res.ok) {
-          const detail = data?.detail || "Không thể xử lý hình ảnh.";
-          throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+          let detail = "Không thể xử lý hình ảnh.";
+          try {
+            const errBody = await res.json();
+            detail = typeof errBody?.detail === "string" ? errBody.detail : detail;
+          } catch {
+            /* ignore */
+          }
+          throw new Error(detail);
         }
 
-        const rawAnswer = typeof data?.answer === "string" ? data.answer : typeof data === "string" ? data : JSON.stringify(data);
-        const detectRegex = /^\[Phát hiện:\s*([^\]]+)\]\s*([\s\S]*)$/;
-        const m = rawAnswer.match(detectRegex);
-        let answerText = rawAnswer;
-        let meta: ChatMessage["meta"] = null;
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error("Không thể khởi tạo bộ đọc stream.");
 
-        if (m) {
-          answerText = m[2] || "";
-          const detectContent = m[1] || "";
-          const scoreRegex = /(.+)\(score=([0-9.]+)\)/;
-          const sm = detectContent.match(scoreRegex);
-          if (sm) {
-            const label = sm[1].trim();
-            const score = parseFloat(sm[2]);
-            meta = { detection: { label, score } };
-          } else {
-            meta = { detection: { label: detectContent.trim(), score: null } };
+        const decoder = new TextDecoder();
+        let fullText = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              let data: { text?: string; error?: string };
+              try {
+                data = JSON.parse(line.slice(6)) as { text?: string; error?: string };
+              } catch {
+                continue;
+              }
+              if (data.error) throw new Error(data.error);
+              if (data.text) {
+                fullText += data.text;
+                setMessages((prev) => {
+                  const newMsgs = [...prev];
+                  newMsgs[newMsgs.length - 1] = { ...newMsgs[newMsgs.length - 1], text: fullText };
+                  return newMsgs;
+                });
+                setTimeout(() => scrollToBottom("auto"), 0);
+              }
+            }
           }
         }
-        setMessages((prev) => [...prev, { role: "bot", text: answerText, meta }]);
+
+        applyDetectionMetaToLastMessage(fullText);
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "Đã có lỗi xảy ra.";
-        setMessages((prev) => [...prev, { role: "bot", text: errorMessage }]);
+        setMessages((prev) => {
+          const newMsgs = [...prev];
+          newMsgs[newMsgs.length - 1] = { ...newMsgs[newMsgs.length - 1], text: errorMessage };
+          return newMsgs;
+        });
       } finally {
+        setStreaming(false);
         setLoading(false);
         removeFile();
         setTimeout(scrollToBottom, 0);
@@ -156,10 +235,12 @@ export default function HomePage() {
       return;
     }
 
-    setMessages((prev) => [...prev, { role: "user", text: userText }]);
-
-    // Add a placeholder message for the bot's streaming response
-    setMessages((prev) => [...prev, { role: "bot", text: "" }]);
+    setStreaming(true);
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", text: userText },
+      { role: "bot", text: "Đang suy nghĩ..." },
+    ]);
 
     try {
       const res = await fetch("/api/chat-stream", {
@@ -222,6 +303,7 @@ export default function HomePage() {
         return newMsgs;
       });
     } finally {
+      setStreaming(false);
       setLoading(false);
       removeFile();
       setTimeout(scrollToBottom, 0);
@@ -417,15 +499,23 @@ export default function HomePage() {
             )}
 
             <div className="input-wrapper">
-              <input
+              <textarea
+                ref={queryInputRef}
                 className="input"
+                rows={1}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Nhập câu hỏi tại đây..."
+                aria-label="Nội dung câu hỏi"
+                autoComplete="off"
               />
             </div>
 
-            <button type="submit" className={`icon-button send ${canSend || file ? 'active' : ''}`} disabled={!canSend && !file}>
+            <button
+              type="submit"
+              className={`icon-button send ${(canSend || file) && !streaming ? "active" : ""}`}
+              disabled={streaming || (!canSend && !file)}
+            >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13" />
                 <polygon points="22 2 15 22 11 13 2 9 22 2" />

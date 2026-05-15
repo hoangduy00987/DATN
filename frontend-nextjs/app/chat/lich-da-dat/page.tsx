@@ -29,7 +29,7 @@ export default function LichDaDatPage() {
   
   // Filter States (For Doctors)
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().split("T")[0]);
+  const [filterDate, setFilterDate] = useState("");
   const [filterStatus, setFilterStatus] = useState("booked");
 
   // Modal States
@@ -74,12 +74,12 @@ export default function LichDaDatPage() {
       
       // If doctor/admin, use the /all endpoint with filters
       if (role === "doctor" || role === "admin") {
-        const params = new URLSearchParams({
-          date: filterDate,
-          status: filterStatus,
-        });
-        if (searchTerm) params.append("search", searchTerm);
-        url = `http://localhost:8000/api/v1/appointments/all?${params.toString()}`;
+        const params = new URLSearchParams();
+        if (filterDate) params.append("date", filterDate);
+        if (filterStatus && filterStatus !== "all") params.append("status", filterStatus);
+        if (searchTerm.trim()) params.append("search", searchTerm.trim());
+        const queryString = params.toString();
+        url = `http://localhost:8000/api/v1/appointments/all${queryString ? `?${queryString}` : ""}`;
       }
 
       const response = await fetch(url, {
@@ -125,6 +125,11 @@ export default function LichDaDatPage() {
       return `${day}/${month}/${d.getFullYear()}`;
     }
     return dateStr;
+  };
+
+  const formatFilterDate = (dateStr: string) => {
+    if (!dateStr) return "Tất cả các ngày";
+    return formatDate(dateStr);
   };
 
   const parseSymptoms = (text: string) => {
@@ -238,7 +243,8 @@ export default function LichDaDatPage() {
                 <input type="date" className="mini-date-input" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
                 <div className="mini-date-overlay">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  <span>{formatDate(filterDate)}</span>
+                  <span>{formatFilterDate(filterDate)}</span>
+                  {filterDate && <button type="button" className="btn-clear-mini" onClick={(e) => { e.stopPropagation(); setFilterDate(""); }}>&times;</button>}
                 </div>
               </div>
             </div>
@@ -398,10 +404,13 @@ export default function LichDaDatPage() {
         .date-input-wrap-mini { position: relative; min-width: 180px; }
         .mini-date-input { position: absolute; opacity: 0; z-index: 2; width: 100%; height: 100%; cursor: pointer; }
         .mini-date-overlay {
+          position: relative;
           display: flex; align-items: center; gap: 8px;
-          padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
+          padding: 10px 36px 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
           background: #f8fafc; font-size: 0.9rem; color: #1e293b; font-weight: 600;
         }
+        .btn-clear-mini { position: absolute; right: 8px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #e2e8f0; color: #64748b; border: none; border-radius: 50%; font-size: 14px; cursor: pointer; z-index: 3; transition: 0.2s; }
+        .btn-clear-mini:hover { background: #ef4444; color: white; }
         .mini-select { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; font-weight: 600; color: #1e293b; outline: none; }
 
         .appointment-header-v2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px dashed #e2e8f0; }

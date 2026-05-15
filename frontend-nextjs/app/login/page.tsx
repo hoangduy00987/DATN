@@ -130,12 +130,17 @@ export default function LoginPage() {
                 
                 // Auto-login after registration
                 try {
+                    const loginRes = await fetch("/api/auth/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email: signupEmail, password: signupPassword }),
+                    });
                     if (loginRes.ok) {
                         const loginData = await loginRes.json();
                         if (loginData.access_token) {
                             localStorage.setItem("access_token", loginData.access_token);
-                            localStorage.setItem("refresh_token", loginData.refresh_token);
-                            localStorage.setItem("user_role", loginData.role);
+                            localStorage.setItem("refresh_token", loginData.refresh_token ?? "");
+                            localStorage.setItem("user_role", loginData.role ?? "");
                         }
                         window.location.replace("/");
                     } else {
