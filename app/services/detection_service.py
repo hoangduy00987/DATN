@@ -29,7 +29,7 @@ IMG_SIZE = 224
 def _load_labels():
     try:
         base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models"))
-        json_path = os.path.join(base, "class_indices (1).json")
+        json_path = os.path.join(base, "class_indices.json")
         with open(json_path, "r", encoding="utf-8") as f:
             class_indices = json.load(f)
         
