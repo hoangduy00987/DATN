@@ -5,9 +5,9 @@ from typing import List, Optional
 from datetime import datetime, date as date_type
 
 from app.db.session import get_db
-from app.db.models import User, Appointment, RoleEnum
+from app.db.models import User, Appointment, MedicalResult, RoleEnum
 from app.core.security import get_current_user
-from app.models.appointment import AppointmentCreate, AppointmentResponse, AppointmentUpdate
+from app.models.appointment import AppointmentCreate, AppointmentResponse, AppointmentUpdate, MedicalResultCreate
 
 router = APIRouter()
 
@@ -119,6 +119,46 @@ def cancel_appointment(
         raise HTTPException(status_code=403, detail="Bạn không có quyền thực hiện thao tác này.")
     
     appointment.status = "cancelled"
+    db.commit()
+    db.refresh(appointment)
+    return appointment
+
+@router.patch("/{appointment_id}/result", response_model=AppointmentResponse)
+def send_medical_result(
+    appointment_id: str,
+    result_in: MedicalResultCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Bác sĩ/Admin gửi hoặc cập nhật kết quả khám cho một lịch hẹn.
+    Sau khi gửi, lịch hẹn được đánh dấu là đã khám bệnh.
+    """
+    if current_user.role not in [RoleEnum.doctor, RoleEnum.admin]:
+        raise HTTPException(status_code=403, detail="Bạn không có quyền gửi kết quả khám.")
+
+    diagnosis = (result_in.diagnosis or "").strip()
+    if not diagnosis:
+        raise HTTPException(status_code=400, detail="Kết quả khám không được để trống.")
+
+    appointment = db.query(Appointment).filter(Appointment.id == appointment_id).first()
+    if not appointment:
+        raise HTTPException(status_code=404, detail="Không tìm thấy lịch khám.")
+
+    if appointment.status == "cancelled":
+        raise HTTPException(status_code=400, detail="Không thể gửi kết quả cho lịch đã hủy.")
+
+    result = db.query(MedicalResult).filter(MedicalResult.appointment_id == appointment.id).first()
+    if result:
+        result.diagnosis = diagnosis
+    else:
+        result = MedicalResult(appointment_id=appointment.id, diagnosis=diagnosis)
+        db.add(result)
+
+    appointment.status = "completed"
+    if current_user.role == RoleEnum.doctor:
+        appointment.doctor_id = current_user.id
+
     db.commit()
     db.refresh(appointment)
     return appointment

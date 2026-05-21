@@ -10,6 +10,9 @@ interface Appointment {
   status: string;
   symptoms: string;
   created_at: string;
+  medical_result?: {
+    diagnosis: string;
+  } | null;
 }
 
 export default function LichKhamDoctorPage() {
@@ -34,6 +37,10 @@ export default function LichKhamDoctorPage() {
   // Modal States
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [resultText, setResultText] = useState("");
+  const [resultError, setResultError] = useState("");
+  const [isSendingResult, setIsSendingResult] = useState(false);
 
   const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: "", show: false });
   const dateInputRef = useRef<HTMLInputElement>(null);
@@ -89,7 +96,49 @@ export default function LichKhamDoctorPage() {
   };
 
   const handleSendResult = (apt: Appointment) => {
-    triggerToast(`Đang gửi kết quả cho bệnh nhân...`);
+    setSelectedApt(apt);
+    setResultText(apt.medical_result?.diagnosis || "");
+    setResultError("");
+    setShowResultModal(true);
+  };
+
+  const submitResult = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedApt) return;
+
+    const diagnosis = resultText.trim();
+    if (!diagnosis) {
+      setResultError("Vui lòng nhập kết quả khám.");
+      return;
+    }
+
+    setIsSendingResult(true);
+    setResultError("");
+    try {
+      const token = getCookie("access_token");
+      if (!token) throw new Error("Phiên đăng nhập hết hạn.");
+
+      const response = await fetch(`http://localhost:8000/api/v1/appointments/${selectedApt.id}/result`, {
+        method: "PATCH",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ diagnosis })
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data?.detail || "Không thể gửi kết quả khám.");
+      }
+
+      setShowResultModal(false);
+      setSelectedApt(null);
+      setResultText("");
+      await fetchAppointments();
+      triggerToast("Đã gửi kết quả và cập nhật trạng thái đã khám bệnh.");
+    } catch (err: any) {
+      setResultError(err.message || "Không thể gửi kết quả khám.");
+    } finally {
+      setIsSendingResult(false);
+    }
   };
 
   const handleDateContainerClick = (e: React.MouseEvent) => {
@@ -189,6 +238,7 @@ export default function LichKhamDoctorPage() {
             <div className="select-wrap-v5">
               <select className="status-select-v5" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                 <option value="booked">Đã đặt</option>
+                <option value="completed">Đã khám bệnh</option>
                 <option value="cancelled">Đã hủy</option>
                 <option value="all">Tất cả</option>
               </select>
@@ -219,19 +269,20 @@ export default function LichKhamDoctorPage() {
                   appointments.map((apt) => {
                     const info = parseSymptoms(apt.symptoms);
                     const isCancelled = apt.status === "cancelled";
+                    const isCompleted = apt.status === "completed";
                     return (
                       <tr key={apt.id} className="row-hover-v5">
                         <td><div className="name-bold">{info.name}</div></td>
                         <td><div className="tag-phone">{info.phone}</div></td>
                         <td><div className="time-group"><span className="day-text">{formatDate(apt.appointment_date)}</span><span className="hour-text">{apt.appointment_time}</span></div></td>
-                        <td><span className={`pill-status ${isCancelled ? 'pill-cancelled' : 'pill-booked'}`}>{isCancelled ? "Đã hủy" : "Đã đặt"}</span></td>
+                        <td><span className={`pill-status ${isCancelled ? 'pill-cancelled' : isCompleted ? 'pill-completed' : 'pill-booked'}`}>{isCancelled ? "Đã hủy" : isCompleted ? "Đã khám bệnh" : "Đã đặt"}</span></td>
                         <td>
                           <div className="action-btns-v5">
                             <button className="btn-act btn-detail-v5" onClick={() => { setSelectedApt(apt); setShowDetailModal(true); }}>
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                               <span>Chi tiết</span>
                             </button>
-                            <button className="btn-act btn-send-v5" onClick={() => handleSendResult(apt)}>
+                            <button className="btn-act btn-send-v5" disabled={isCancelled} onClick={() => handleSendResult(apt)}>
                               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                               <span>Gửi kết quả</span>
                             </button>
@@ -255,12 +306,47 @@ export default function LichKhamDoctorPage() {
               <div className="item-v5"><label>Họ và tên</label><p>{parseSymptoms(selectedApt.symptoms).name}</p></div>
               <div className="item-v5"><label>Số điện thoại</label><p>{parseSymptoms(selectedApt.symptoms).phone}</p></div>
               <div className="item-v5"><label>Ngày sinh</label><p>{formatDate(parseSymptoms(selectedApt.symptoms).dob)}</p></div>
-              <div className="item-v5"><label>Trạng thái</label><p style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : '#059669', fontWeight: 700 }}>{selectedApt.status === "cancelled" ? "Đã hủy" : "Đã đặt"}</p></div>
+              <div className="item-v5"><label>Trạng thái</label><p style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : selectedApt.status === 'completed' ? '#2563eb' : '#059669', fontWeight: 700 }}>{selectedApt.status === "cancelled" ? "Đã hủy" : selectedApt.status === "completed" ? "Đã khám bệnh" : "Đã đặt"}</p></div>
               <div className="item-v5"><label>Ngày khám</label><p>{formatDate(selectedApt.appointment_date)}</p></div>
               <div className="item-v5"><label>Giờ khám</label><p>{selectedApt.appointment_time}</p></div>
               <div className="item-v5 full-v5"><label>Lý do khám / Triệu chứng</label><div className="reason-text">{parseSymptoms(selectedApt.symptoms).reason}</div></div>
             </div>
             <div className="modal-footer-v5"><button className="btn-close-v5" onClick={() => setShowDetailModal(false)}>Đóng</button></div>
+          </div>
+        </div>
+      )}
+
+      {showResultModal && selectedApt && (
+        <div className="modal-mask">
+          <div className="modal-container-v5">
+            <div className="modal-header-v5">
+              <h3>Gửi kết quả khám</h3>
+              <button className="btn-x" onClick={() => setShowResultModal(false)}>&times;</button>
+            </div>
+            <form onSubmit={submitResult}>
+              <div className="modal-grid-v5">
+                <div className="item-v5 full-v5">
+                  <label>Bệnh nhân</label>
+                  <p>{parseSymptoms(selectedApt.symptoms).name}</p>
+                </div>
+                <div className="item-v5 full-v5">
+                  <label>Kết quả khám bệnh</label>
+                  <textarea
+                    className="result-textarea-v5"
+                    value={resultText}
+                    onChange={(e) => setResultText(e.target.value)}
+                    placeholder="Nhập chẩn đoán, kết luận, hướng điều trị hoặc ghi chú cho bệnh nhân..."
+                    rows={7}
+                    autoFocus
+                  />
+                </div>
+                {resultError && <div className="item-v5 full-v5 result-error-v5">{resultError}</div>}
+              </div>
+              <div className="modal-footer-v5">
+                <button type="button" className="btn-close-v5 btn-muted-v5" onClick={() => setShowResultModal(false)}>Hủy</button>
+                <button type="submit" className="btn-close-v5" disabled={isSendingResult}>{isSendingResult ? "Đang gửi..." : "Gửi kết quả"}</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -328,6 +414,7 @@ export default function LichKhamDoctorPage() {
         .pill-status { padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
         .pill-booked { background: #d1fae5; color: #065f46; }
         .pill-cancelled { background: #fee2e2; color: #991b1b; }
+        .pill-completed { background: #dbeafe; color: #1d4ed8; }
 
         .action-btns-v5 { display: flex; gap: 10px; }
         .btn-act { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border-radius: 8px; border: none; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
@@ -335,6 +422,7 @@ export default function LichKhamDoctorPage() {
         .btn-detail-v5:hover { background: #3b82f6; color: white; transform: translateY(-1px); }
         .btn-send-v5 { background: #f1f5f9; color: #059669; }
         .btn-send-v5:hover { background: #059669; color: white; transform: translateY(-1px); }
+        .btn-act:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
         @media (max-width: 1024px) {
           .premium-ui { padding: 15px; }
@@ -421,6 +509,12 @@ export default function LichKhamDoctorPage() {
         .modal-footer-v5 { padding: 20px 24px; display: flex; justify-content: flex-end; background: #f8fafc; border-top: 1px solid #f1f5f9; }
         .btn-close-v5 { padding: 10px 28px; background: #0f172a; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; }
         .btn-close-v5:hover { background: #334155; }
+        .btn-close-v5:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-muted-v5 { background: #e2e8f0; color: #334155; margin-right: 10px; }
+        .btn-muted-v5:hover { background: #cbd5e1; }
+        .result-textarea-v5 { width: 100%; resize: vertical; min-height: 150px; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: Arial, sans-serif; font-size: 0.95rem; line-height: 1.5; color: #1e293b; outline: none; box-sizing: border-box; }
+        .result-textarea-v5:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12); }
+        .result-error-v5 { color: #dc2626; font-weight: 700; font-size: 0.9rem; }
       `}</style>
     </div>
   );

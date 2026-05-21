@@ -10,6 +10,9 @@ interface Appointment {
   status: string;
   symptoms: string;
   created_at: string;
+  medical_result?: {
+    diagnosis: string;
+  } | null;
 }
 
 export default function LichDaDatPage() {
@@ -35,6 +38,7 @@ export default function LichDaDatPage() {
   // Modal States
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [aptToCancel, setAptToCancel] = useState<string | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -251,6 +255,7 @@ export default function LichDaDatPage() {
             <div className="filter-group status">
               <select className="mini-select" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                 <option value="booked">Đang chờ (Đã đặt)</option>
+                <option value="completed">Đã khám bệnh</option>
                 <option value="cancelled">Đã hủy</option>
                 <option value="all">Tất cả trạng thái</option>
               </select>
@@ -278,17 +283,22 @@ export default function LichDaDatPage() {
                   {appointments.map((apt) => {
                     const info = parseSymptoms(apt.symptoms);
                     const isCancelled = apt.status === "cancelled";
+                    const isCompleted = apt.status === "completed";
+                    const isLocked = isCancelled || isCompleted;
                     return (
                       <tr key={apt.id} className="table-row-hover">
                         <td><div className="patient-name">{info.name}</div></td>
                         <td><div className="phone-tag">{info.phone}</div></td>
                         <td><div className="datetime-cell"><span className="date-main">{formatDate(apt.appointment_date)}</span><span className="time-sub">{apt.appointment_time}</span></div></td>
-                        <td><span className={`status-pill ${isCancelled ? 'status-cancelled' : 'status-booked'}`}>{isCancelled ? "Đã hủy" : "Đã đặt"}</span></td>
+                        <td><span className={`status-pill ${isCancelled ? 'status-cancelled' : isCompleted ? 'status-completed' : 'status-booked'}`}>{isCancelled ? "Đã hủy" : isCompleted ? "Đã khám bệnh" : "Đã đặt"}</span></td>
                         <td>
                           <div className="action-group-premium-left">
                             <button className="act-btn view-btn" title="Xem chi tiết" onClick={() => { setSelectedApt(apt); setShowDetailModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                            <button className="act-btn edit-btn" title="Chỉnh sửa" disabled={isCancelled} onClick={() => handleEditClick(apt)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                            <button className="act-btn delete-btn" title="Hủy lịch" disabled={isCancelled} onClick={() => { setAptToCancel(apt.id); setShowCancelModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+                            {role === 'patient' && (
+                              <button className="act-btn result-btn" title="Xem kết quả" onClick={() => { setSelectedApt(apt); setShowResultModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>
+                            )}
+                            <button className="act-btn edit-btn" title="Chỉnh sửa" disabled={isLocked} onClick={() => handleEditClick(apt)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                            <button className="act-btn delete-btn" title="Hủy lịch" disabled={isLocked} onClick={() => { setAptToCancel(apt.id); setShowCancelModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
                           </div>
                         </td>
                       </tr>
@@ -311,12 +321,38 @@ export default function LichDaDatPage() {
               <div className="info-block"><span className="block-label">Họ và tên</span><span className="block-value">{parseSymptoms(selectedApt.symptoms).name}</span></div>
               <div className="info-block"><span className="block-label">Số điện thoại</span><span className="block-value">{parseSymptoms(selectedApt.symptoms).phone}</span></div>
               <div className="info-block"><span className="block-label">Ngày sinh</span><span className="block-value">{formatDate(parseSymptoms(selectedApt.symptoms).dob)}</span></div>
-              <div className="info-block"><span className="block-label">Trạng thái</span><span className="status-pill-mini" style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : '#059669' }}>{selectedApt.status === "cancelled" ? "Đã hủy" : "Đã đặt"}</span></div>
+              <div className="info-block"><span className="block-label">Trạng thái</span><span className="status-pill-mini" style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : selectedApt.status === 'completed' ? '#2563eb' : '#059669' }}>{selectedApt.status === "cancelled" ? "Đã hủy" : selectedApt.status === "completed" ? "Đã khám bệnh" : "Đã đặt"}</span></div>
               <div className="info-block"><span className="block-label">Ngày khám</span><span className="block-value">{formatDate(selectedApt.appointment_date)}</span></div>
               <div className="info-block"><span className="block-label">Giờ khám dự kiến</span><span className="block-value">{selectedApt.appointment_time}</span></div>
               <div className="info-block full"><span className="block-label">Lý do khám / Triệu chứng</span><p className="block-text">{parseSymptoms(selectedApt.symptoms).reason}</p></div>
             </div>
             <div className="modal-actions-v2-right"><button className="btn-primary-v2 equal-btn" onClick={() => setShowDetailModal(false)}>Đóng</button></div>
+          </div>
+        </div>
+      )}
+
+      {showResultModal && selectedApt && (
+        <div className="modal-overlay-blur">
+          <div className="modal-premium-content">
+            <div className="modal-banner">
+              <h3>Kết quả khám bệnh</h3>
+              <button className="btn-close-top" onClick={() => setShowResultModal(false)}>&times;</button>
+            </div>
+            <div className="modal-grid">
+              <div className="info-block full">
+                <span className="block-label">Bệnh nhân</span>
+                <span className="block-value">{parseSymptoms(selectedApt.symptoms).name}</span>
+              </div>
+              <div className="info-block full">
+                <span className="block-label">Nội dung bác sĩ gửi</span>
+                {selectedApt.medical_result?.diagnosis ? (
+                  <p className="block-text result-text-view">{selectedApt.medical_result.diagnosis}</p>
+                ) : (
+                  <p className="block-text result-empty-view">Chưa có kết quả khám cho lịch hẹn này.</p>
+                )}
+              </div>
+            </div>
+            <div className="modal-actions-v2-right"><button className="btn-primary-v2 equal-btn" onClick={() => setShowResultModal(false)}>Đóng</button></div>
           </div>
         </div>
       )}
@@ -432,12 +468,14 @@ export default function LichDaDatPage() {
         .status-pill { display: inline-flex; padding: 6px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
         .status-booked { background: #d1fae5; color: #065f46; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .status-completed { background: #dbeafe; color: #1d4ed8; }
         .status-pill-mini { font-size: 1.1rem; font-weight: 700; }
 
         .action-group-premium-left { display: flex; gap: 8px; }
         .act-btn { width: 38px; height: 38px; border-radius: 10px; border: none; background: #f8fafc; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .act-btn:hover:not(:disabled) { color: white; transform: scale(1.1); }
         .view-btn:hover:not(:disabled) { background: #3b82f6; }
+        .result-btn:hover:not(:disabled) { background: #059669; }
         .edit-btn:hover:not(:disabled) { background: #f59e0b; }
         .delete-btn:hover:not(:disabled) { background: #ef4444; }
         .act-btn:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -455,6 +493,8 @@ export default function LichDaDatPage() {
         .block-label { font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 2px; text-transform: none; }
         .block-value { font-size: 1.1rem; font-weight: 700; color: #1e293b; word-break: break-word; }
         .block-text { margin: 0; padding: 16px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 8px; color: #334155; line-height: 1.6; font-size: 0.95rem; }
+        .result-text-view { white-space: pre-wrap; }
+        .result-empty-view { color: #64748b; font-style: italic; }
 
         .date-input-wrap { position: relative; width: 100%; }
         .date-display-overlay {
