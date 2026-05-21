@@ -1,111 +1,104 @@
-# FastAPI RAG Chatbot
+# FastAPI RAG Chatbot (MVC Architecture)
 
-This project is a FastAPI-based chatbot that utilizes a Retrieval-Augmented Generation (RAG) approach to provide responses based on user queries. The chatbot leverages embeddings and document retrieval to generate contextually relevant answers.
+Dự án này là một chatbot dựa trên FastAPI, sử dụng phương pháp Retrieval-Augmented Generation (RAG) và tích hợp các mô hình Machine Learning (nhận diện bệnh qua ảnh X-quang). Backend đã được thiết kế theo chuẩn mô hình **MVC (Model-Controller-Service)**.
 
-## Project Structure
+## Cấu trúc thư mục (MVC)
 
+```text
+app/
+├── main.py                          # Entry point (factory + middleware)
+├── core/
+│   ├── config.py                    # Cấu hình biến môi trường
+│   └── security.py                  # JWT / Auth utilities
+├── db/
+│   ├── models.py                    # Entity Models (SQLAlchemy ORM)
+│   ├── session.py                   # Kết nối & session DB
+│   └── chroma_client.py             # Client kết nối ChromaDB
+│
+├── models/
+│   ├── schemas/                     # Data Transfer Objects (Pydantic)
+│   │   ├── auth.py                  # DTOs cho Authentication
+│   │   ├── chat.py                  # DTOs cho Chat/RAG
+│   │   ├── appointment.py           # DTOs cho Lịch khám bệnh
+│   │   └── ingest.py                # DTOs cho Ingest tài liệu
+│
+├── repositories/                    # Data Access Layer (CRUD DB)
+│   ├── user_repository.py           # Truy vấn bảng users
+│   └── appointment_repository.py    # Truy vấn bảng appointments & medical_results
+│
+├── services/                        # Business Logic Layer
+│   ├── auth_service.py              # Logic Đăng ký / Đăng nhập
+│   ├── appointment_service.py       # Logic xử lý lịch khám bệnh
+│   ├── chat_service.py              # Logic RAG pipeline (chat & image)
+│   ├── detect_service.py            # Singleton wrapper cho ML models
+│   ├── ingest_task_service.py       # Logic chạy nền ingest dữ liệu
+│   ├── detection_service.py         # ML model classes (Keras/TensorFlow)
+│   ├── embedding_service.py         # Gọi API tạo embedding (Gemini)
+│   ├── generation_service.py        # Gọi API tạo câu trả lời (Gemini)
+│   └── retrieval_service.py         # Truy vấn tài liệu từ ChromaDB
+│
+├── api/v1/                          # Controller Layer (Routers)
+│   ├── router.py                    # Gộp tất cả các routers
+│   ├── auth.py                      # Route cho Authentication
+│   ├── appointments.py              # Route cho Lịch khám
+│   ├── chat.py                      # Route cho Chat (Sync/Stream)
+│   ├── detect.py                    # Route cho Nhận diện ảnh
+│   └── ingest.py                    # Route cho Ingest tài liệu
 ```
-fastapi-rag-chatbot
-├── app
-│   ├── __init__.py
-│   ├── main.py
-│   ├── api
-│   │   ├── __init__.py
-│   │   └── v1
-│   │       ├── __init__.py
-│   │       └── chat.py
-│   ├── core
-│   │   ├── __init__.py
-│   │   └── config.py
-│   ├── db
-│   │   ├── __init__.py
-│   │   └── chroma_client.py
-│   ├── models
-│   │   ├── __init__.py
-│   │   ├── chat_request.py
-│   │   └── chat_response.py
-│   ├── services
-│   │   ├── __init__.py
-│   │   ├── ingest_service.py
-│   │   ├── embedding_service.py
-│   │   ├── retrieval_service.py
-│   │   └── generation_service.py
-│   └── utils
-│       ├── __init__.py
-│       └── metadata.py
-├── data
-│   ├── chroma_db
-│   └── processed
-│       └── output_rag_ready.jsonl
-├── requirements.txt
-├── .env.example
-├── .gitignore
-└── README.md
+
+## Hướng dẫn chạy dự án
+
+### 1. Chuẩn bị biến môi trường
+Copy file `.env.example` thành `.env` và điền các thông số cần thiết (đặc biệt là API key nếu có).
+
+Trên Windows PowerShell:
+```powershell
+Copy-Item .env.example .env
+```
+Trên Linux/Mac:
+```bash
+cp .env.example .env
 ```
 
-## Setup Instructions
+### 2. Chạy bằng Docker (Khuyên dùng)
 
-1. **Clone the repository:**
-   ```bash
-   git clone <repository-url>
-   cd fastapi-rag-chatbot
-   ```
+Dự án đã được cấu hình sẵn `docker-compose.yml` để chạy trọn gói cả DB và ứng dụng.
 
-2. **Create a virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-   ```
+**Build và chạy:**
+```bash
+docker compose up --build
+```
 
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+**Chạy ngầm (Detached mode):**
+```bash
+docker compose up -d --build
+```
 
-4. **Set up environment variables:**
-   Copy the `.env.example` file to `.env` and fill in the required values.
+**Dừng container:**
+```bash
+docker compose down
+```
 
-5. **Run the application:**
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+### 3. Chạy Local (Không dùng Docker)
 
-## Run with Docker
+**Tạo môi trường ảo (Virtual Environment):**
+```bash
+python -m venv venv
+# Kích hoạt trên Windows:
+venv\Scripts\activate
+# Kích hoạt trên Mac/Linux:
+source venv/bin/activate
+```
 
-1. **Prepare environment variables:**
-   ```bash
-   cp .env.example .env
-   ```
-   On Windows PowerShell:
-   ```powershell
-   Copy-Item .env.example .env
-   ```
+**Cài đặt thư viện:**
+```bash
+pip install -r requirements.txt
+```
 
-2. **Build and run container:**
-   ```bash
-   docker compose up --build
-   ```
+**Khởi chạy server FastAPI:**
+```bash
+uvicorn app.main:app --reload
+```
 
-3. **Run in detached mode (optional):**
-   ```bash
-   docker compose up -d --build
-   ```
-
-4. **Stop containers:**
-   ```bash
-   docker compose down
-   ```
-
-The API will be available at `http://localhost:8000` and chat endpoint at `http://localhost:8000/api/v1/chat`.
-
-## Usage
-
-Once the application is running, you can access the chatbot API at `http://localhost:8000/api/v1/chat`. You can send chat requests to this endpoint to receive responses based on the ingested data.
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for more details.
+Server sẽ chạy tại: `http://localhost:8000`
+Tài liệu API (Swagger UI): `http://localhost:8000/docs`

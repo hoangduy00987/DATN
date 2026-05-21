@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -8,7 +8,6 @@ import { useCallback, useEffect, useLayoutEffect, useState, useRef, type ReactNo
 const patientNavItems = [
   { href: "/chat/dat-lich", label: "Đặt lịch khám bệnh", icon: "calendar" as const },
   { href: "/chat/lich-da-dat", label: "Danh sách lịch khám", icon: "list" as const },
-  { href: "/chat/ket-qua", label: "Kết quả khám bệnh", icon: "clipboard" as const },
 ];
 
 const doctorNavItems = [
@@ -71,7 +70,7 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
 
-  // Đồng bộ độ rộng sidebar → --sidebar-width (composer `left`) — tránh chồng lên sidebar
+  // Đồng bộ độ rộng sidebar -> --sidebar-width (composer `left`) để tránh chồng lên sidebar.
   useLayoutEffect(() => {
     const el = sidebarRef.current;
     if (typeof window === "undefined" || !el) return;
@@ -117,7 +116,7 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
   const isPatient = sessionRole === "patient";
   const isDoctorNav = sessionRole === "doctor" || sessionRole === "admin";
   const brandHref = isPatient ? "/chat/dat-lich" : "/chat";
-  const brandSubtitle = isPatient ? "Khu vực người khám bệnh" : "Trợ lý AI — Bác sĩ";
+  const brandSubtitle = isPatient ? "Khu vực người khám bệnh" : "Trợ lý AI - Bác sĩ";
 
   const handleLogout = useCallback(async () => {
     setLogoutLoading(true);
@@ -193,7 +192,7 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
               <polyline points="16 17 21 12 16 7" />
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
-            <span>{logoutLoading ? "Đang đăng xuất…" : "Đăng xuất"}</span>
+            <span>{logoutLoading ? "Đang đăng xuất..." : "Đăng xuất"}</span>
           </button>
 
           <button

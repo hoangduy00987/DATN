@@ -1,39 +1,53 @@
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+"""
+FastAPI application entry point.
+
+Responsibilities:
+- Application factory (lifespan, middleware, exception handlers)
+- Seed default doctor account on startup
+- Mount the central API router
+"""
 import logging
 import os
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
 from app.db.session import SessionLocal, engine
 from app.db.models import Base, User, RoleEnum
 from app.core.security import get_password_hash
-from app.api.v1.auth import router as auth_router
-from app.api.v1.chat import router as chat_router
-from app.api.v1.detect import router as detect_router
-from app.api.v1.ingest import router as ingest_router
-from app.api.v1.appointments import router as appointments_router
+from app.api.v1.router import api_router
+
+
+# ── Lifespan ──────────────────────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure tables are created (useful if docker init.sql didn't run or is missing)
     Base.metadata.create_all(bind=engine)
-    
+
     db = SessionLocal()
     try:
         doctor_email = os.getenv("DEFAULT_DOCTOR_EMAIL", "doctor@admin.com")
         doctor_password = os.getenv("DEFAULT_DOCTOR_PASSWORD", "Lungcare2026")
         doctor_name = os.getenv("DEFAULT_DOCTOR_NAME", "Dr. Admin")
-        
+
         # Check if default doctor exists
         doctor = db.query(User).filter(User.email == doctor_email).first()
         if not doctor:
             # Truncate password to bcrypt limit (72 bytes) before hashing
-            safe_password = doctor_password[:72] if len(doctor_password.encode()) > 72 else doctor_password
+            safe_password = (
+                doctor_password[:72]
+                if len(doctor_password.encode()) > 72
+                else doctor_password
+            )
             new_doctor = User(
                 email=doctor_email,
                 full_name=doctor_name,
                 password_hash=get_password_hash(safe_password),
-                role=RoleEnum.doctor
+                role=RoleEnum.doctor,
             )
             db.add(new_doctor)
             db.commit()
@@ -42,10 +56,12 @@ async def lifespan(app: FastAPI):
         db.close()
     yield
 
+
+# ── Application factory ────────────────────────────────────────────────────────
+
 app = FastAPI(lifespan=lifespan)
 
-from fastapi.middleware.cors import CORSMiddleware
-
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -55,6 +71,8 @@ app.add_middleware(
 )
 
 
+# ── Exception handlers ─────────────────────────────────────────────────────────
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
     """Xử lý lỗi validation một cách an toàn, tránh UnicodeDecodeError với dữ liệu nhị phân."""
@@ -63,20 +81,22 @@ async def validation_exception_handler(request, exc):
         status_code=422,
         content={
             "detail": "Dữ liệu yêu cầu không hợp lệ. Vui lòng kiểm tra lại định dạng file hoặc các trường dữ liệu.",
-            "error_type": "RequestValidationError"
+            "error_type": "RequestValidationError",
         },
     )
 
-app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
-app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])
-app.include_router(detect_router, prefix="/api/v1/detect", tags=["detect"])
-app.include_router(ingest_router, prefix="/api/v1/ingest", tags=["ingest"])
-app.include_router(appointments_router, prefix="/api/v1/appointments", tags=["appointments"])
+
+# ── Routes ─────────────────────────────────────────────────────────────────────
+
+app.include_router(api_router)
+
 
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the FastAPI RAG Chatbot!"}
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
