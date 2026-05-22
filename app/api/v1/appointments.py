@@ -51,6 +51,18 @@ def get_all_appointments(
     """Lấy toàn bộ danh sách lịch khám (Dành cho Bác sĩ/Admin)."""
     return AppointmentService.get_all(db, current_user, search=search, date=date, status=status)
 
+from app.models.schemas.user import UserOut
+
+@router.get("/available-doctors", response_model=List[UserOut])
+def get_available_doctors(
+    date: date_type,
+    time: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Lấy danh sách bác sĩ rảnh vào ngày và giờ cụ thể."""
+    return AppointmentService.get_available_doctors(db, date, time)
+
 
 @router.get("/{appointment_id}", response_model=AppointmentResponse)
 def get_appointment_detail(
@@ -92,3 +104,13 @@ def update_appointment(
 ):
     """Cập nhật thông tin lịch khám."""
     return AppointmentService.update(db, current_user, appointment_id, appointment_in)
+
+@router.patch("/{appointment_id}/assign-doctor", response_model=AppointmentResponse)
+def assign_doctor(
+    appointment_id: str,
+    doctor_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Admin phân công bác sĩ cho một lịch khám."""
+    return AppointmentService.assign_doctor(db, appointment_id, doctor_id, current_user)

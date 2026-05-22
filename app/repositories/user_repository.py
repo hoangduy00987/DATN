@@ -19,12 +19,27 @@ class UserRepository:
         return db.query(User).filter(User.id == user_id).first()
 
     @staticmethod
+    def get_all(db: Session, skip: int = 0, limit: int = 100):
+        return db.query(User).offset(skip).limit(limit).all()
+
+    @staticmethod
+    def get_doctors(db: Session):
+        """Return all users with the doctor role."""
+        return db.query(User).filter(User.role == RoleEnum.doctor).all()
+        
+    @staticmethod
+    def get_admins(db: Session):
+        """Return all users with the admin role."""
+        return db.query(User).filter(User.role == RoleEnum.admin).all()
+
+    @staticmethod
     def create(
         db: Session,
         email: str,
         full_name: str,
         password_hash: str,
         role: RoleEnum = RoleEnum.patient,
+        phone: str = None,
     ) -> User:
         """Create and persist a new User, then return it."""
         new_user = User(
@@ -32,8 +47,23 @@ class UserRepository:
             full_name=full_name,
             password_hash=password_hash,
             role=role,
+            phone=phone
         )
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
         return new_user
+
+    @staticmethod
+    def update(db: Session, user: User, data: dict) -> User:
+        for key, value in data.items():
+            if value is not None:
+                setattr(user, key, value)
+        db.commit()
+        db.refresh(user)
+        return user
+
+    @staticmethod
+    def delete(db: Session, user: User):
+        db.delete(user)
+        db.commit()

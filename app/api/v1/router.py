@@ -31,6 +31,8 @@ from app.api.v1.chat import router as chat_router
 from app.api.v1.detect import router as detect_router
 from app.api.v1.ingest import router as ingest_router
 from app.api.v1.appointments import router as appointments_router
+from app.api.v1.users import router as users_router
+from app.api.v1.notifications import router as notifications_router
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -39,3 +41,5 @@ api_router.include_router(chat_router, prefix="/chat", tags=["chat"])
 api_router.include_router(detect_router, prefix="/detect", tags=["detect"])
 api_router.include_router(ingest_router, prefix="/ingest", tags=["ingest"])
 api_router.include_router(appointments_router, prefix="/appointments", tags=["appointments"])
+api_router.include_router(users_router, prefix="/users", tags=["users"])
+api_router.include_router(notifications_router, prefix="/notifications", tags=["notifications"])

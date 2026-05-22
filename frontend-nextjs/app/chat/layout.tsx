@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useState, useRef, type ReactNode } from "react";
 
 const patientNavItems = [
@@ -12,7 +12,12 @@ const patientNavItems = [
 
 const doctorNavItems = [
   { href: "/chat", label: "AI tư vấn", icon: "sparkles" as const },
-  { href: "/chat/lich-kham", label: "Danh sách lịch khám", icon: "list" as const },
+  { href: "/chat/lich-da-dat", label: "Danh sách lịch khám", icon: "list" as const },
+];
+
+const adminNavItems = [
+  { href: "/chat/quan-ly-nguoi-dung", label: "Quản lý người dùng", icon: "clipboard" as const },
+  { href: "/chat/lich-da-dat", label: "Danh sách lịch khám", icon: "list" as const },
 ];
 
 function NavIcon({ name }: { name: "calendar" | "clipboard" | "sparkles" | "list" | "fileReview" }) {
@@ -65,6 +70,7 @@ function NavIcon({ name }: { name: "calendar" | "clipboard" | "sparkles" | "list
 
 export default function ChatLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sessionRole, setSessionRole] = useState<string | null | undefined>(undefined);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -98,25 +104,107 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
     };
   }, [isCollapsed]);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/auth/session", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d: { role?: string | null }) => {
-        if (!cancelled) setSessionRole(typeof d.role === "string" ? d.role : null);
-      })
-      .catch(() => {
-        if (!cancelled) setSessionRole(null);
-      });
-    return () => {
-      cancelled = true;
-    };
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const popoverRef = useRef<HTMLDivElement>(null);
+
+  // Format any YYYY-MM-DD dates inside a notification message to dd/mm/yyyy
+  const formatNotifMessage = (msg: string) =>
+    msg.replace(/(\d{4})-(\d{2})-(\d{2})/g, (_: string, y: string, m: string, d: string) => `${d}/${m}/${y}`);
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const response = await fetch("/api/notifications", { cache: "no-store" });
+      if (!response.ok) throw new Error("Failed to fetch");
+      const data = await response.json();
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch {
+      setNotifications([]);
+    }
   }, []);
 
+  const markAsRead = async (notification: any) => {
+    try {
+      if (!notification.is_read) {
+        await fetch(`/api/notifications/${notification.id}/read`, { method: "PATCH" });
+        setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, is_read: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+      if (notification.link) {
+        setShowNotifications(false);
+        router.push(notification.link);
+      }
+    } catch { }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    if (showNotifications) {
+      document.addEventListener("mousedown", handleClickOutside);
+      fetchNotifications();
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showNotifications, fetchNotifications]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const checkSession = async () => {
+      try {
+        const r = await fetch("/api/auth/session", { cache: "no-store" });
+        const d = await r.json();
+        if (cancelled) return;
+
+        const role = typeof d.role === "string" ? d.role : null;
+        setSessionRole(role);
+
+        if (role === "admin" && (pathname === "/chat" || pathname === "/chat/")) {
+          window.location.href = "/chat/quan-ly-nguoi-dung";
+        }
+
+        if (role && role !== "admin") {
+          const nr = await fetch("/api/notifications/unread-count", { cache: "no-store" });
+          const nv = await nr.json();
+          if (!cancelled) setUnreadCount(nv.unread_count || 0);
+        }
+      } catch (err) {
+        if (!cancelled) setSessionRole(null);
+      }
+    };
+
+    checkSession();
+
+    // Polling every 20 seconds for new notifications
+    const interval = setInterval(() => {
+      if (sessionRole && sessionRole !== "admin") {
+        fetch("/api/notifications/unread-count", { cache: "no-store" })
+          .then(r => r.json())
+          .then(v => setUnreadCount(v.unread_count || 0))
+          .catch(() => { });
+      }
+    }, 20000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [pathname, sessionRole]);
+
   const isPatient = sessionRole === "patient";
-  const isDoctorNav = sessionRole === "doctor" || sessionRole === "admin";
-  const brandHref = isPatient ? "/chat/dat-lich" : "/chat";
-  const brandSubtitle = isPatient ? "Khu vực người khám bệnh" : "Trợ lý AI - Bác sĩ";
+  const isAdmin = sessionRole === "admin";
+  const isDoctor = sessionRole === "doctor";
+  const isDoctorNav = isDoctor || isAdmin;
+
+  const brandHref = isPatient ? "/chat/dat-lich" : isAdmin ? "/chat/quan-ly-nguoi-dung" : "/chat";
+  const brandSubtitle = isPatient
+    ? "Khu vực người khám bệnh"
+    : isAdmin
+      ? "Quản trị hệ thống"
+      : "Trợ lý AI - Bác sĩ";
 
   const handleLogout = useCallback(async () => {
     setLogoutLoading(true);
@@ -165,6 +253,19 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
               </Link>
             );
           })
+        ) : sessionRole === "admin" ? (
+          adminNavItems.map((item) => {
+            const active =
+              item.href === "/chat"
+                ? pathname === "/chat" || pathname === "/chat/"
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+            return (
+              <Link key={item.href} href={item.href} className={`chat-nav-link${active ? " active" : ""}`}>
+                <NavIcon name={item.icon} />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })
         ) : isDoctorNav ? (
           doctorNavItems.map((item) => {
             const active =
@@ -179,6 +280,10 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
             );
           })
         ) : null}
+
+        {sessionRole && !isAdmin && (
+          <div className="chat-nav-divider" style={{ margin: "auto 0 10px 0", height: "1px", background: "rgba(255,255,255,0.1)" }} />
+        )}
 
         <div className="chat-sidebar-footer">
           <button
@@ -217,7 +322,54 @@ export default function ChatLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
 
-      <div className="chat-app-main">{children}</div>
+      <div className="chat-app-main">
+        {sessionRole && !isAdmin && (
+          <header className="chat-top-header">
+            <div className="notification-wrapper" ref={popoverRef}>
+              <button
+                className={`notif-bell-btn ${showNotifications ? 'active' : ''} ${unreadCount > 0 ? 'has-notify' : ''}`}
+                onClick={() => setShowNotifications(!showNotifications)}
+                title="Thông báo"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {unreadCount > 0 && <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+              </button>
+
+              {showNotifications && (
+                <div className="notif-popover">
+                  <div className="notif-popover-header">Thông báo</div>
+                  <div className="notif-popover-body">
+                    {(!Array.isArray(notifications) || notifications.length === 0) ? (
+                      <div className="notif-empty">Không có thông báo nào</div>
+                    ) : (
+                      notifications.slice(0, 10).map((n) => (
+                        <div
+                          key={n.id}
+                          className={`notif-item ${!n.is_read ? 'unread' : ''}`}
+                          onClick={() => markAsRead(n)}
+                        >
+                          <div className="notif-dot"></div>
+                          <div className="notif-content">
+                            <div className="notif-title">{n.title}</div>
+                            <div className="notif-message">{formatNotifMessage(n.message)}</div>
+                            <div className="notif-time">{new Date(n.created_at).toLocaleString('vi-VN')}</div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </header>
+        )}
+        <div className="chat-content-container">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }

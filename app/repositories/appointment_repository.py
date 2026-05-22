@@ -21,10 +21,12 @@ class AppointmentRepository:
         appointment_date: date_type,
         appointment_time=None,
         symptoms: Optional[str] = None,
+        doctor_id: Optional[str] = None,
     ) -> Appointment:
         """Create and persist a new Appointment."""
         new_appt = Appointment(
             patient_id=patient_id,
+            doctor_id=doctor_id,
             appointment_date=appointment_date,
             appointment_time=appointment_time,
             symptoms=symptoms,
@@ -51,10 +53,14 @@ class AppointmentRepository:
         search: Optional[str] = None,
         date: Optional[date_type] = None,
         status: Optional[str] = None,
+        doctor_id: Optional[str] = None,
     ) -> list[Appointment]:
         """Return appointments with optional filters (for doctor/admin)."""
         query = db.query(Appointment).join(Appointment.patient)
         search_value = search.strip() if search else ""
+
+        if doctor_id:
+            query = query.filter(Appointment.doctor_id == doctor_id)
 
         if date:
             query = query.filter(Appointment.appointment_date == date)

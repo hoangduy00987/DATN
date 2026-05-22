@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 
 export default function DatLichPage() {
   const getCookie = (name: string) => {
@@ -24,6 +24,10 @@ export default function DatLichPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
+  const [availableDoctors, setAvailableDoctors] = useState<any[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [doctorId, setDoctorId] = useState("");
+
   const validate = (data = formData) => {
     const errors: Record<string, string> = {};
     if (!data.fullName.trim()) errors.fullName = "Họ tên không được để trống";
@@ -34,12 +38,38 @@ export default function DatLichPage() {
     }
     if (!data.dob) errors.dob = "Vui lòng chọn ngày sinh";
     if (!data.appointmentDate) errors.appointmentDate = "Vui lòng chọn ngày khám";
+    if (!doctorId) errors.doctorId = "Vui lòng chọn bác sĩ phù hợp (hoặc đổi khung giờ nếu kín lịch)";
     if (!data.reason.trim()) errors.reason = "Vui lòng nhập lý do khám";
 
     setFormErrors(errors);
     const isValid = Object.keys(errors).length === 0;
     return isValid;
   };
+
+  useEffect(() => {
+    if (!formData.appointmentDate || !formData.timeSlot) return;
+
+    const fetchDocs = async () => {
+      setLoadingDoctors(true);
+      try {
+        const token = getCookie("access_token");
+        const res = await fetch(`http://localhost:8000/api/v1/appointments/available-doctors?date=${formData.appointmentDate}&time=${formData.timeSlot}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableDoctors(data);
+          if (data.length > 0) setDoctorId(data[0].id);
+          else setDoctorId("");
+        }
+      } catch (e) {
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+
+    fetchDocs();
+  }, [formData.appointmentDate, formData.timeSlot]);
 
   const handleBlur = (field: string) => {
     setTouched(prev => ({ ...prev, [field]: true }));
@@ -80,7 +110,8 @@ export default function DatLichPage() {
         body: JSON.stringify({
           appointment_date: formData.appointmentDate,
           appointment_time: formData.timeSlot,
-          symptoms: `Bệnh nhân: ${formData.fullName}, SĐT: ${formData.phone}, Ngày sinh: ${formData.dob}. Lý do: ${formData.reason}`
+          symptoms: `Bệnh nhân: ${formData.fullName}, SĐT: ${formData.phone}, Ngày sinh: ${formData.dob}. Lý do: ${formData.reason}`,
+          doctor_id: doctorId
         })
       });
 
@@ -216,6 +247,26 @@ export default function DatLichPage() {
                     );
                   })}
                 </select>
+              </div>
+
+              <div className="form-group full-width">
+                <label htmlFor="doctorId">Chọn Bác sĩ phụ trách {loadingDoctors && <span style={{ fontSize: '0.8rem', color: '#64748b' }}>(Đang tải...)</span>}</label>
+                <select
+                  id="doctorId"
+                  name="doctorId"
+                  value={doctorId}
+                  onChange={(e) => setDoctorId(e.target.value)}
+                  className={formErrors.doctorId ? "error" : ""}
+                >
+                  {!formData.appointmentDate && <option value="">Vui lòng chọn ngày khám trước</option>}
+                  {formData.appointmentDate && availableDoctors.length === 0 && !loadingDoctors && (
+                    <option value="">Không có bác sĩ nào trống lịch khung giờ này</option>
+                  )}
+                  {availableDoctors.map(doc => (
+                    <option key={doc.id} value={doc.id}>Bác sĩ: {doc.full_name}</option>
+                  ))}
+                </select>
+                {formErrors.doctorId && <span className="error-msg">{formErrors.doctorId}</span>}
               </div>
 
               <div className="form-group full-width">

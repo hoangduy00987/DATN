@@ -14,7 +14,7 @@ class AppointmentBase(BaseModel):
 
 
 class AppointmentCreate(AppointmentBase):
-    pass
+    doctor_id: str
 
 
 class MedicalResultResponse(BaseModel):

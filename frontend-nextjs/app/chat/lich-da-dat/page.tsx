@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface Appointment {
@@ -15,7 +16,7 @@ interface Appointment {
   } | null;
 }
 
-export default function LichDaDatPage() {
+function LichDaDatContent() {
   const getCookie = (name: string) => {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
@@ -25,11 +26,11 @@ export default function LichDaDatPage() {
 
   // User Role State
   const [role, setRole] = useState<string | null>(null);
-  
+
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
+
   // Filter States (For Doctors)
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("");
@@ -48,6 +49,17 @@ export default function LichDaDatPage() {
   const [updateError, setUpdateError] = useState("");
 
   const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: "", show: false });
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const highlightRowRef = useRef<HTMLTableRowElement>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Medical Result Entry States
+  const [showResultEntryModal, setShowResultEntryModal] = useState(false);
+  const [diagnosis, setDiagnosis] = useState("");
+  const [isSubmittingResult, setIsSubmittingResult] = useState(false);
+
+  const isAdmin = role === "admin";
 
   const triggerToast = (msg: string) => {
     setToast({ message: msg, show: true });
@@ -65,7 +77,7 @@ export default function LichDaDatPage() {
         const data = await response.json();
         setRole(data.role);
       }
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const fetchAppointments = async () => {
@@ -75,7 +87,7 @@ export default function LichDaDatPage() {
       if (!token) throw new Error("Phiên đăng nhập hết hạn.");
 
       let url = "http://localhost:8000/api/v1/appointments/my";
-      
+
       // If doctor/admin, use the /all endpoint with filters
       if (role === "doctor" || role === "admin") {
         const params = new URLSearchParams();
@@ -105,8 +117,49 @@ export default function LichDaDatPage() {
   }, []);
 
   useEffect(() => {
-    if (role) fetchAppointments();
-  }, [role, filterDate, filterStatus]); // Fetch when role is ready or filters change
+    if (role) {
+      const hId = searchParams.get("highlight");
+      // If we have a highlight, ensure we are searching across all statuses
+      if (hId && (role === "doctor" || role === "admin") && filterStatus !== "all") {
+        setFilterStatus("all");
+        // The next effect cycle will fetch with 'all'
+        return;
+      }
+      fetchAppointments();
+    }
+  }, [role, filterDate, filterStatus, searchParams]);
+
+  // After appointments loaded, handle highlight param
+  useEffect(() => {
+    const hId = searchParams.get("highlight");
+    if (!hId || !appointments.length) return;
+
+    const found = appointments.find(a => a.id.toLowerCase() === hId.toLowerCase());
+
+    if (found) {
+      if (highlightId !== found.id) {
+        setHighlightId(found.id);
+        setSelectedApt(found);
+      }
+
+      // We found it, now we can remove from URL so it doesn't re-trigger on reload
+      // But we use a flag or just do it once
+      const search = new URLSearchParams(window.location.search);
+      if (search.has("highlight")) {
+        // Scroll and open modal
+        setTimeout(() => {
+          if (highlightRowRef.current) {
+            highlightRowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+          // Only auto-open if it's a completed appointment (usually for results)
+          if (found.status === "completed") {
+            setShowResultModal(true);
+          }
+          router.replace('/chat/lich-da-dat', { scroll: false });
+        }, 600);
+      }
+    }
+  }, [appointments, searchParams, highlightId, router]);
 
   // Debounced search
   useEffect(() => {
@@ -204,8 +257,34 @@ export default function LichDaDatPage() {
         fetchAppointments();
         triggerToast("Đã hủy lịch thành công");
       }
-    } catch (err) {} finally {
+    } catch (err) { } finally {
       setIsCancelling(false);
+    }
+  };
+
+  const handleResultSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedApt) return;
+    setIsSubmittingResult(true);
+    try {
+      const token = getCookie("access_token");
+      const response = await fetch(`http://localhost:8000/api/v1/appointments/${selectedApt.id}/result`, {
+        method: "PATCH",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ diagnosis })
+      });
+      if (response.ok) {
+        setShowResultEntryModal(false);
+        fetchAppointments();
+        triggerToast("Đã gửi kết quả thành công");
+      } else {
+        const d = await response.json();
+        triggerToast(d.detail || "Gửi kết quả thất bại");
+      }
+    } catch (err) {
+      triggerToast("Lỗi kết nối");
+    } finally {
+      setIsSubmittingResult(false);
     }
   };
 
@@ -243,7 +322,7 @@ export default function LichDaDatPage() {
           <div className="doctor-toolbar">
             <div className="filter-group search">
               <div className="search-box">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
                 <input type="text" placeholder="Tìm tên bệnh nhân..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
               </div>
             </div>
@@ -251,7 +330,7 @@ export default function LichDaDatPage() {
               <div className="date-input-wrap-mini">
                 <input type="date" className="mini-date-input" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
                 <div className="mini-date-overlay">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
                   <span>{formatFilterDate(filterDate)}</span>
                   {filterDate && <button type="button" className="btn-clear-mini" onClick={(e) => { e.stopPropagation(); setFilterDate(""); }}>&times;</button>}
                 </div>
@@ -293,21 +372,41 @@ export default function LichDaDatPage() {
                     const info = parseSymptoms(apt.symptoms);
                     const isCancelled = apt.status === "cancelled";
                     const isCompleted = apt.status === "completed";
-                    const isLocked = isCancelled || isCompleted;
+                    const isConfirmed = apt.status === "confirmed";
+                    const isLocked = isCancelled || isCompleted || isConfirmed;
                     return (
-                      <tr key={apt.id} className="table-row-hover">
+                      <tr
+                        key={apt.id}
+                        ref={apt.id === highlightId ? highlightRowRef : null}
+                        className={`table-row-hover${apt.id === highlightId ? ' row-highlight' : ''}`}
+                      >
                         <td><div className="patient-name">{info.name}</div></td>
                         <td><div className="phone-tag">{info.phone}</div></td>
                         <td><div className="datetime-cell"><span className="date-main">{formatDate(apt.appointment_date)}</span><span className="time-sub">{apt.appointment_time}</span></div></td>
-                        <td><span className={`status-pill ${isCancelled ? 'status-cancelled' : isCompleted ? 'status-completed' : 'status-booked'}`}>{isCancelled ? "Đã hủy" : isCompleted ? "Đã khám bệnh" : "Đã đặt"}</span></td>
+                        <td>
+                          <span className={`status-pill ${isCancelled ? 'status-cancelled' :
+                            isCompleted ? 'status-completed' :
+                              isConfirmed ? 'status-confirmed' : 'status-booked'
+                            }`}>
+                            {isCancelled ? "Đã hủy" : isCompleted ? "Đã khám bệnh" : isConfirmed ? "Đã tiếp nhận" : "Đã đặt"}
+                          </span>
+                        </td>
                         <td>
                           <div className="action-group-premium-left">
-                            <button className="act-btn view-btn" title="Xem chi tiết" onClick={() => { setSelectedApt(apt); setShowDetailModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                            {role === 'patient' && (
-                              <button className="act-btn result-btn" title="Xem kết quả" onClick={() => { setSelectedApt(apt); setShowResultModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>
+                            <button className="act-btn view-btn" title="Xem chi tiết" onClick={() => { setSelectedApt(apt); setShowDetailModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg></button>
+
+                            {role === 'doctor' && (apt.status === 'booked' || apt.status === 'confirmed') && (
+                              <button className="act-btn edit-btn" style={{ background: '#059669', color: 'white' }} title="Gửi kết quả" onClick={() => { setSelectedApt(apt); setDiagnosis(apt.medical_result?.diagnosis || ""); setShowResultEntryModal(true); }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+                              </button>
                             )}
-                            <button className="act-btn edit-btn" title="Chỉnh sửa" disabled={isLocked} onClick={() => handleEditClick(apt)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                            <button className="act-btn delete-btn" title="Hủy lịch" disabled={isLocked} onClick={() => { setAptToCancel(apt.id); setShowCancelModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+
+                            {role === 'patient' && isCompleted && (
+                              <button className="act-btn result-btn" title="Xem kết quả" onClick={() => { setSelectedApt(apt); setShowResultModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg></button>
+                            )}
+
+                            <button className="act-btn edit-btn" title="Chỉnh sửa" disabled={isLocked} onClick={() => handleEditClick(apt)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></button>
+                            <button className="act-btn delete-btn" title="Hủy lịch" disabled={isLocked} onClick={() => { setAptToCancel(apt.id); setShowCancelModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg></button>
                           </div>
                         </td>
                       </tr>
@@ -330,7 +429,7 @@ export default function LichDaDatPage() {
               <div className="info-block"><span className="block-label">Họ và tên</span><span className="block-value">{parseSymptoms(selectedApt.symptoms).name}</span></div>
               <div className="info-block"><span className="block-label">Số điện thoại</span><span className="block-value">{parseSymptoms(selectedApt.symptoms).phone}</span></div>
               <div className="info-block"><span className="block-label">Ngày sinh</span><span className="block-value">{formatDate(parseSymptoms(selectedApt.symptoms).dob)}</span></div>
-              <div className="info-block"><span className="block-label">Trạng thái</span><span className="status-pill-mini" style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : selectedApt.status === 'completed' ? '#2563eb' : '#059669' }}>{selectedApt.status === "cancelled" ? "Đã hủy" : selectedApt.status === "completed" ? "Đã khám bệnh" : "Đã đặt"}</span></div>
+              <div className="info-block"><span className="block-label">Trạng thái</span><span className="status-pill-mini" style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : selectedApt.status === 'completed' ? '#64748b' : selectedApt.status === 'confirmed' ? '#1e40af' : '#166534' }}>{selectedApt.status === "cancelled" ? "Đã hủy" : selectedApt.status === "completed" ? "Đã khám bệnh" : selectedApt.status === "confirmed" ? "Đã tiếp nhận" : "Đã đặt"}</span></div>
               <div className="info-block"><span className="block-label">Ngày khám</span><span className="block-value">{formatDate(selectedApt.appointment_date)}</span></div>
               <div className="info-block"><span className="block-label">Giờ khám dự kiến</span><span className="block-value">{selectedApt.appointment_time}</span></div>
               <div className="info-block full"><span className="block-label">Lý do khám / Triệu chứng</span><p className="block-text">{parseSymptoms(selectedApt.symptoms).reason}</p></div>
@@ -353,6 +452,10 @@ export default function LichDaDatPage() {
                 <span className="block-value">{parseSymptoms(selectedApt.symptoms).name}</span>
               </div>
               <div className="info-block full">
+                <span className="block-label">Ngày khám bệnh</span>
+                <span className="block-value">{formatDate(selectedApt.appointment_date)}</span>
+              </div>
+              <div className="info-block full">
                 <span className="block-label">Nội dung bác sĩ gửi</span>
                 {selectedApt.medical_result?.diagnosis ? (
                   <p className="block-text result-text-view">{selectedApt.medical_result.diagnosis}</p>
@@ -372,32 +475,32 @@ export default function LichDaDatPage() {
             <div className="modal-banner"><h3>Chỉnh sửa lịch khám</h3><button className="btn-close-top" onClick={() => setShowEditModal(false)}>&times;</button></div>
             <form onSubmit={handleUpdateSubmit}>
               <div className="modal-grid">
-                <div className="info-block"><span className="block-label">Họ và tên</span><input className="edit-input" value={editData.fullName} onChange={e => setEditData({...editData, fullName: e.target.value})} required /></div>
-                <div className="info-block"><span className="block-label">Số điện thoại</span><input className="edit-input" value={editData.phone} onChange={e => setEditData({...editData, phone: e.target.value})} required /></div>
+                <div className="info-block"><span className="block-label">Họ và tên</span><input className="edit-input" value={editData.fullName} onChange={e => setEditData({ ...editData, fullName: e.target.value })} required /></div>
+                <div className="info-block"><span className="block-label">Số điện thoại</span><input className="edit-input" value={editData.phone} onChange={e => setEditData({ ...editData, phone: e.target.value })} required /></div>
                 <div className="info-block">
                   <span className="block-label">Ngày sinh</span>
                   <div className="date-input-wrap">
-                    <input type="date" className="edit-input date-picker-input" value={editData.dob} onChange={e => setEditData({...editData, dob: e.target.value})} required />
+                    <input type="date" className="edit-input date-picker-input" value={editData.dob} onChange={e => setEditData({ ...editData, dob: e.target.value })} required />
                     <div className="date-display-overlay"><span>{formatDate(editData.dob)}</span><svg className="calendar-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
                   </div>
                 </div>
                 <div className="info-block">
                   <span className="block-label">Ngày khám</span>
                   <div className="date-input-wrap">
-                    <input type="date" className="edit-input date-picker-input" value={editData.date} onChange={e => setEditData({...editData, date: e.target.value})} required />
+                    <input type="date" className="edit-input date-picker-input" value={editData.date} onChange={e => setEditData({ ...editData, date: e.target.value })} required />
                     <div className="date-display-overlay"><span>{formatDate(editData.date)}</span><svg className="calendar-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
                   </div>
                 </div>
                 <div className="info-block full">
                   <span className="block-label">Giờ khám dự kiến</span>
-                  <select className="edit-input edit-select" value={editData.time} onChange={e => setEditData({...editData, time: e.target.value})} required>
+                  <select className="edit-input edit-select" value={editData.time} onChange={e => setEditData({ ...editData, time: e.target.value })} required>
                     {Array.from({ length: 13 }).map((_, i) => {
                       const timeStr = `${(i + 8).toString().padStart(2, '0')}:00`;
                       return <option key={timeStr} value={timeStr}>{timeStr}</option>;
                     })}
                   </select>
                 </div>
-                <div className="info-block full"><span className="block-label">Lý do khám / Triệu chứng</span><textarea className="edit-textarea" value={editData.reason} onChange={e => setEditData({...editData, reason: e.target.value})} required rows={3} /></div>
+                <div className="info-block full"><span className="block-label">Lý do khám / Triệu chứng</span><textarea className="edit-textarea" value={editData.reason} onChange={e => setEditData({ ...editData, reason: e.target.value })} required rows={3} /></div>
                 {updateError && <div className="info-block full" style={{ color: '#ef4444', fontWeight: 600 }}>{updateError}</div>}
               </div>
               <div className="modal-actions-v2-right">
@@ -418,6 +521,26 @@ export default function LichDaDatPage() {
               <button className="btn-secondary-v2 equal-btn" onClick={() => setShowCancelModal(false)}>Đóng</button>
               <button className="btn-danger-v2 equal-btn" disabled={isCancelling} onClick={confirmCancel}>{isCancelling ? "Đang xử lý..." : "Xác nhận hủy"}</button>
             </div>
+          </div>
+        </div>
+      )}
+
+
+      {showResultEntryModal && selectedApt && (
+        <div className="modal-overlay-blur">
+          <div className="modal-premium-content">
+            <div className="modal-banner"><h3>Gửi kết quả khám bệnh</h3><button className="btn-close-top" onClick={() => setShowResultEntryModal(false)}>&times;</button></div>
+            <form onSubmit={handleResultSubmit}>
+              <div className="modal-grid">
+                <div className="info-block"><span className="block-label">Bệnh nhân</span><span className="block-value">{parseSymptoms(selectedApt.symptoms).name}</span></div>
+                <div className="info-block"><span className="block-label">Ngày khám</span><span className="block-value">{formatDate(selectedApt.appointment_date)}</span></div>
+                <div className="info-block full"><span className="block-label">Nội dung kết quả / Chẩn đoán</span><textarea className="edit-textarea" rows={6} value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} placeholder="Nhập chẩn đoán và lời khuyên của bác sĩ..."></textarea></div>
+              </div>
+              <div className="modal-actions-v2-right">
+                <button type="button" className="btn-secondary-v2 equal-btn" onClick={() => setShowResultEntryModal(false)}>Hủy</button>
+                <button type="submit" className="btn-primary-v2 equal-btn" disabled={isSubmittingResult}>{isSubmittingResult ? "Đang gửi..." : "Gửi kết quả"}</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -460,8 +583,44 @@ export default function LichDaDatPage() {
 
         .modern-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
         .modern-table th { padding: 0 20px 8px; font-size: 0.85rem; font-weight: 700; color: #475569; text-align: left; }
-        .modern-table td { padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #f1f5f9; }
-        .table-row-hover:hover td { background: #f8fafc; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        
+        /* Unified Row Styling */
+        .modern-table td { 
+          padding: 20px; 
+          background: #ffffff; 
+          border-top: 1px solid #f1f5f9;
+          border-bottom: 1px solid #f1f5f9;
+          border-left: none;
+          border-right: none;
+          transition: all 0.2s;
+        }
+        .modern-table td:first-child { 
+          border-left: 1px solid #f1f5f9;
+          border-radius: 12px 0 0 12px; 
+        }
+        .modern-table td:last-child { 
+          border-right: 1px solid #f1f5f9;
+          border-radius: 0 12px 12px 0; 
+        }
+
+        .table-row-hover:hover td { background: #f8fafc; transform: translateY(-1px); }
+        
+        /* Seamless Highlight Styling */
+        .row-highlight td { 
+          background: #fef9c3 !important; 
+          border-top: 2px solid #f59e0b !important; 
+          border-bottom: 2px solid #f59e0b !important;
+          box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15);
+        }
+        .row-highlight td:first-child { 
+          border-left: 2px solid #f59e0b !important; 
+          border-radius: 12px 0 0 12px; 
+        }
+        .row-highlight td:last-child { 
+          border-right: 2px solid #f59e0b !important; 
+          border-radius: 0 12px 12px 0; 
+        }
+        @keyframes fadeHighlight { 0% { background: #fef08a !important; } 100% { background: #fef9c3 !important; } }
 
         .patient-name { font-weight: 700; color: #1e293b; }
         .phone-tag { font-size: 0.85rem; background: #f1f5f9; padding: 4px 10px; border-radius: 6px; color: #475569; font-weight: 500; display: inline-block; }
@@ -470,15 +629,17 @@ export default function LichDaDatPage() {
         .time-sub { font-size: 0.8rem; color: #64748b; }
         
         .status-pill { display: inline-flex; padding: 6px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
-        .status-booked { background: #d1fae5; color: #065f46; }
+        .status-booked { background: #dcfce7; color: #166534; }
+        .status-confirmed { background: #dbeafe; color: #1e40af; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
-        .status-completed { background: #dbeafe; color: #1d4ed8; }
+        .status-completed { background: #f1f5f9; color: #64748b; }
         .status-pill-mini { font-size: 1.1rem; font-weight: 700; }
 
         .action-group-premium-left { display: flex; gap: 8px; }
         .act-btn { width: 38px; height: 38px; border-radius: 10px; border: none; background: #f8fafc; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
         .act-btn:hover:not(:disabled) { color: white; transform: scale(1.1); }
         .view-btn:hover:not(:disabled) { background: #3b82f6; }
+        .assign-btn:hover:not(:disabled) { background: #8b5cf6; }
         .result-btn:hover:not(:disabled) { background: #059669; }
         .edit-btn:hover:not(:disabled) { background: #f59e0b; }
         .delete-btn:hover:not(:disabled) { background: #ef4444; }
@@ -520,5 +681,13 @@ export default function LichDaDatPage() {
         .modal-body-p { padding: 24px; color: #475569; line-height: 1.5; }
       `}</style>
     </div>
+  );
+}
+
+export default function LichDaDatPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 40, textAlign: "center", color: "#64748b" }}>Đang tải...</div>}>
+      <LichDaDatContent />
+    </Suspense>
   );
 }

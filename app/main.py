@@ -3,7 +3,7 @@ FastAPI application entry point.
 
 Responsibilities:
 - Application factory (lifespan, middleware, exception handlers)
-- Seed default doctor account on startup
+- Seed default admin (DEFAULT_ADMIN_*) and doctor (DEFAULT_DOCTOR_*) on startup
 - Mount the central API router
 """
 import logging
@@ -23,6 +23,13 @@ from app.api.v1.router import api_router
 
 # ── Lifespan ──────────────────────────────────────────────────────────────────
 
+def _truncate_password_for_bcrypt(password: str) -> str:
+    """Bcrypt chỉ dùng tối đa 72 byte đầu của mật khẩu."""
+    if len(password.encode("utf-8")) > 72:
+        return password.encode("utf-8")[:72].decode("utf-8", errors="ignore")
+    return password
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure tables are created (useful if docker init.sql didn't run or is missing)
@@ -30,19 +37,42 @@ async def lifespan(app: FastAPI):
 
     db = SessionLocal()
     try:
+        # ── Default admin (role admin) — bắt buộc có email + password trong .env ──
+        admin_email = (os.getenv("DEFAULT_ADMIN_EMAIL") or "").strip()
+        admin_password = os.getenv("DEFAULT_ADMIN_PASSWORD") or ""
+        admin_name = (os.getenv("DEFAULT_ADMIN_NAME") or "Quản trị viên").strip() or "Quản trị viên"
+
+        if admin_email and admin_password:
+            existing_admin = db.query(User).filter(User.email == admin_email).first()
+            if not existing_admin:
+                new_admin = User(
+                    email=admin_email,
+                    full_name=admin_name,
+                    password_hash=get_password_hash(_truncate_password_for_bcrypt(admin_password)),
+                    role=RoleEnum.admin,
+                )
+                db.add(new_admin)
+                db.commit()
+                logging.info("Default admin account created: %s", admin_email)
+            elif existing_admin.role != RoleEnum.admin:
+                logging.warning(
+                    "DEFAULT_ADMIN_EMAIL=%s đã tồn tại nhưng role=%s — không ghi đè.",
+                    admin_email,
+                    existing_admin.role,
+                )
+        else:
+            logging.info(
+                "Bỏ qua tạo admin mặc định: thiếu DEFAULT_ADMIN_EMAIL hoặc DEFAULT_ADMIN_PASSWORD."
+            )
+
+        # ── Default doctor ──
         doctor_email = os.getenv("DEFAULT_DOCTOR_EMAIL", "doctor@admin.com")
         doctor_password = os.getenv("DEFAULT_DOCTOR_PASSWORD", "Lungcare2026")
         doctor_name = os.getenv("DEFAULT_DOCTOR_NAME", "Dr. Admin")
 
-        # Check if default doctor exists
         doctor = db.query(User).filter(User.email == doctor_email).first()
         if not doctor:
-            # Truncate password to bcrypt limit (72 bytes) before hashing
-            safe_password = (
-                doctor_password[:72]
-                if len(doctor_password.encode()) > 72
-                else doctor_password
-            )
+            safe_password = _truncate_password_for_bcrypt(doctor_password)
             new_doctor = User(
                 email=doctor_email,
                 full_name=doctor_name,
@@ -51,7 +81,7 @@ async def lifespan(app: FastAPI):
             )
             db.add(new_doctor)
             db.commit()
-            print(f"Default doctor {doctor_email} created!")
+            logging.info("Default doctor account created: %s", doctor_email)
     finally:
         db.close()
     yield

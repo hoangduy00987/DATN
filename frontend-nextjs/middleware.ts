@@ -114,8 +114,6 @@ function isPatientPortalPath(pathname: string): boolean {
   return (
     pathname === "/chat/dat-lich" ||
     pathname.startsWith("/chat/dat-lich/") ||
-    pathname === "/chat/lich-da-dat" ||
-    pathname.startsWith("/chat/lich-da-dat/") ||
     pathname === "/chat/ket-qua" ||
     pathname.startsWith("/chat/ket-qua/")
   );
@@ -185,6 +183,10 @@ export async function middleware(request: NextRequest) {
     }
     if (!role) {
       return patch(redirectToLogin(request, "reauth"));
+    }
+
+    if (pathname === "/chat/lich-da-dat" || pathname.startsWith("/chat/lich-da-dat/")) {
+      return patch(NextResponse.next());
     }
 
     if (isPatientPortalPath(pathname)) {
