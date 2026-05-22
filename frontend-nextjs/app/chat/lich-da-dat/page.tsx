@@ -271,7 +271,11 @@ export default function LichDaDatPage() {
               <div className="empty-icon">📅</div>
               <h3>Không có lịch khám nào</h3>
               <p>Hiện tại không có dữ liệu lịch khám phù hợp với bộ lọc của bạn.</p>
-              {role === 'patient' && <Link href="/chat/dat-lich" className="btn-go-book">Đặt lịch ngay</Link>}
+              {role === 'patient' && (
+                <Link href="/chat/dat-lich" className="btn-primary">
+                  Đặt lịch ngay
+                </Link>
+              )}
             </div>
           ) : (
             <div className="table-container">
