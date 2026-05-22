@@ -221,15 +221,18 @@ export default function LichDaDatPage() {
       )}
 
       <div className="appointment-card">
-        <div className="appointment-header-v2">
-          <div className="header-title-section">
-            <div className="header-icon-main">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-            </div>
-            <div className="header-text-main">
-              <h1>{role === 'doctor' || role === 'admin' ? 'Quản lý lịch khám bệnh' : 'Danh sách lịch khám của tôi'}</h1>
-              <p>{role === 'doctor' || role === 'admin' ? 'Theo dõi và quản lý bệnh nhân trong ngày' : 'Quản lý hành trình chăm sóc sức khỏe của bạn'}</p>
-            </div>
+        <div className="appointment-header">
+          <div className="icon-wrap">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+          </div>
+          <div className="header-text">
+            <h1>{role === "doctor" || role === "admin" ? "Quản lý lịch khám bệnh" : "Danh sách lịch khám của tôi"}</h1>
+            <p>{role === "doctor" || role === "admin" ? "Theo dõi và quản lý bệnh nhân trong ngày" : "Quản lý hành trình chăm sóc sức khỏe của bạn"}</p>
           </div>
         </div>
 
@@ -267,11 +270,11 @@ export default function LichDaDatPage() {
           {loading ? (
             <div className="loading-wrapper">Đang tải danh sách...</div>
           ) : appointments.length === 0 ? (
-            <div className="empty-fancy">
-              <div className="empty-icon">📅</div>
-              <h3>Không có lịch khám nào</h3>
-              <p>Hiện tại không có dữ liệu lịch khám phù hợp với bộ lọc của bạn.</p>
-              {role === 'patient' && (
+            <div className="appointment-empty-state">
+              <div className="header-text">
+                <h1>Không có lịch khám nào</h1>
+              </div>
+              {role === "patient" && (
                 <Link href="/chat/dat-lich" className="btn-primary">
                   Đặt lịch ngay
                 </Link>
@@ -453,11 +456,6 @@ export default function LichDaDatPage() {
         .btn-clear-mini:hover { background: #ef4444; color: white; }
         .mini-select { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; font-weight: 600; color: #1e293b; outline: none; }
 
-        .appointment-header-v2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px dashed #e2e8f0; }
-        .header-title-section { display: flex; gap: 20px; align-items: center; }
-        .header-icon-main { width: 56px; height: 56px; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
-        .header-text-main h1 { font-size: 1.5rem; font-weight: 500; color: #0f172a; margin: 0; }
-        
         .modern-table { width: 100%; border-collapse: separate; border-spacing: 0 12px; }
         .modern-table th { padding: 0 20px 8px; font-size: 0.85rem; font-weight: 700; color: #475569; text-align: left; }
         .modern-table td { padding: 20px; background: #ffffff; border-radius: 12px; border: 1px solid #f1f5f9; }
