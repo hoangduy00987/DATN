@@ -61,6 +61,10 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
         raise credentials_exception
+    
+    if user.status == "locked":
+        raise HTTPException(status_code=403, detail="Tài khoản của bạn đã bị khóa.")
+        
     return user
 
 def get_current_doctor(current_user: User = Depends(get_current_user)):

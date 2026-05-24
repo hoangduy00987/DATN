@@ -24,8 +24,8 @@ class UserRepository:
 
     @staticmethod
     def get_doctors(db: Session):
-        """Return all users with the doctor role."""
-        return db.query(User).filter(User.role == RoleEnum.doctor).all()
+        """Return all users with the doctor role and active status."""
+        return db.query(User).filter(User.role == RoleEnum.doctor, User.status == "active").all()
         
     @staticmethod
     def get_admins(db: Session):
@@ -40,6 +40,7 @@ class UserRepository:
         password_hash: str,
         role: RoleEnum = RoleEnum.patient,
         phone: str = None,
+        status: str = "active",
     ) -> User:
         """Create and persist a new User, then return it."""
         new_user = User(
@@ -47,7 +48,8 @@ class UserRepository:
             full_name=full_name,
             password_hash=password_hash,
             role=role,
-            phone=phone
+            phone=phone,
+            status=status
         )
         db.add(new_user)
         db.commit()

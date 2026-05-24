@@ -31,6 +31,8 @@ class MedicalResultResponse(BaseModel):
         from_attributes = True
 
 
+from app.models.schemas.user import UserOut
+
 class AppointmentResponse(AppointmentBase):
     id: UUID
     patient_id: UUID
@@ -38,6 +40,7 @@ class AppointmentResponse(AppointmentBase):
     status: str
     note: Optional[str] = None
     medical_result: Optional[MedicalResultResponse] = None
+    doctor: Optional[UserOut] = None
     created_at: datetime
     updated_at: datetime
 

@@ -29,7 +29,8 @@ class UserService:
             full_name=data.full_name, 
             password_hash=password_hash, 
             role=data.role,
-            phone=data.phone
+            phone=data.phone,
+            status=data.status
         )
 
     @staticmethod

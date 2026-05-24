@@ -14,6 +14,9 @@ interface Appointment {
   medical_result?: {
     diagnosis: string;
   } | null;
+  doctor?: {
+    full_name: string;
+  } | null;
 }
 
 function LichDaDatContent() {
@@ -31,9 +34,13 @@ function LichDaDatContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Filter States (For Doctors)
+  // Filter States (For Doctors/Admins)
+  const getLocalDate = () => {
+    const tzOffset = new Date().getTimezoneOffset() * 60000;
+    return new Date(Date.now() - tzOffset).toISOString().split("T")[0];
+  };
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterDate, setFilterDate] = useState("");
+  const [filterDate, setFilterDate] = useState(getLocalDate());
   const [filterStatus, setFilterStatus] = useState("booked");
 
   // Modal States
@@ -328,12 +335,8 @@ function LichDaDatContent() {
             </div>
             <div className="filter-group date">
               <div className="date-input-wrap-mini">
-                <input type="date" className="mini-date-input" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
-                <div className="mini-date-overlay">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
-                  <span>{formatFilterDate(filterDate)}</span>
-                  {filterDate && <button type="button" className="btn-clear-mini" onClick={(e) => { e.stopPropagation(); setFilterDate(""); }}>&times;</button>}
-                </div>
+                <input type="date" className="native-date-input-v5" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
+                {filterDate && <button type="button" className="btn-clear-mini" style={{right: '35px'}} onClick={(e) => { e.stopPropagation(); setFilterDate(""); }}>&times;</button>}
               </div>
             </div>
             <div className="filter-group status">
@@ -365,7 +368,7 @@ function LichDaDatContent() {
             <div className="table-container">
               <table className="modern-table">
                 <thead>
-                  <tr><th>Bệnh nhân</th><th>Liên lạc</th><th>Thời gian</th><th>Trạng thái</th><th>Hành động</th></tr>
+                  <tr><th>Bệnh nhân</th><th>Liên lạc</th><th>Thời gian</th><th>Bác sĩ</th><th>Trạng thái</th><th>Hành động</th></tr>
                 </thead>
                 <tbody>
                   {appointments.map((apt) => {
@@ -383,6 +386,7 @@ function LichDaDatContent() {
                         <td><div className="patient-name">{info.name}</div></td>
                         <td><div className="phone-tag">{info.phone}</div></td>
                         <td><div className="datetime-cell"><span className="date-main">{formatDate(apt.appointment_date)}</span><span className="time-sub">{apt.appointment_time}</span></div></td>
+                        <td><div className="doctor-tag">{apt.doctor ? apt.doctor.full_name : "Chưa xếp"}</div></td>
                         <td>
                           <span className={`status-pill ${isCancelled ? 'status-cancelled' :
                             isCompleted ? 'status-completed' :
@@ -430,6 +434,7 @@ function LichDaDatContent() {
               <div className="info-block"><span className="block-label">Số điện thoại</span><span className="block-value">{parseSymptoms(selectedApt.symptoms).phone}</span></div>
               <div className="info-block"><span className="block-label">Ngày sinh</span><span className="block-value">{formatDate(parseSymptoms(selectedApt.symptoms).dob)}</span></div>
               <div className="info-block"><span className="block-label">Trạng thái</span><span className="status-pill-mini" style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : selectedApt.status === 'completed' ? '#64748b' : selectedApt.status === 'confirmed' ? '#1e40af' : '#166534' }}>{selectedApt.status === "cancelled" ? "Đã hủy" : selectedApt.status === "completed" ? "Đã khám bệnh" : selectedApt.status === "confirmed" ? "Đã tiếp nhận" : "Đã đặt"}</span></div>
+              <div className="info-block"><span className="block-label">Bác sĩ phụ trách</span><span className="block-value">{selectedApt.doctor ? selectedApt.doctor.full_name : "Chưa có"}</span></div>
               <div className="info-block"><span className="block-label">Ngày khám</span><span className="block-value">{formatDate(selectedApt.appointment_date)}</span></div>
               <div className="info-block"><span className="block-label">Giờ khám dự kiến</span><span className="block-value">{selectedApt.appointment_time}</span></div>
               <div className="info-block full"><span className="block-label">Lý do khám / Triệu chứng</span><p className="block-text">{parseSymptoms(selectedApt.symptoms).reason}</p></div>
@@ -569,14 +574,9 @@ function LichDaDatContent() {
         .search-box svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
         .search-box input { width: 100%; padding: 10px 12px 10px 40px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; }
         
-        .date-input-wrap-mini { position: relative; min-width: 180px; }
-        .mini-date-input { position: absolute; opacity: 0; z-index: 2; width: 100%; height: 100%; cursor: pointer; }
-        .mini-date-overlay {
-          position: relative;
-          display: flex; align-items: center; gap: 8px;
-          padding: 10px 36px 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
-          background: #f8fafc; font-size: 0.9rem; color: #1e293b; font-weight: 600;
-        }
+        .date-input-wrap-mini { position: relative; min-width: 180px; display: flex; align-items: center; }
+        .native-date-input-v5 { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; font-weight: 600; color: #1e293b; outline: none; cursor: pointer; appearance: auto; transition: 0.2s; font-family: inherit; }
+        .native-date-input-v5:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12); background: white; }
         .btn-clear-mini { position: absolute; right: 8px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; background: #e2e8f0; color: #64748b; border: none; border-radius: 50%; font-size: 14px; cursor: pointer; z-index: 3; transition: 0.2s; }
         .btn-clear-mini:hover { background: #ef4444; color: white; }
         .mini-select { padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; font-weight: 600; color: #1e293b; outline: none; }
@@ -627,6 +627,7 @@ function LichDaDatContent() {
         .datetime-cell { display: flex; flex-direction: column; }
         .date-main { font-weight: 600; color: #1e293b; }
         .time-sub { font-size: 0.8rem; color: #64748b; }
+        .doctor-tag { font-size: 0.85rem; font-weight: 600; color: #059669; background: #ecfdf5; padding: 4px 8px; border-radius: 4px; display: inline-block; }
         
         .status-pill { display: inline-flex; padding: 6px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
         .status-booked { background: #dcfce7; color: #166534; }

@@ -55,6 +55,9 @@ class AuthService:
                 status_code=401, detail="Incorrect email or password"
             )
 
+        if user.status == "locked":
+            raise HTTPException(status_code=403, detail="Tài khoản của bạn đã bị khóa.")
+
         role_value = user.role.value
         access_token = create_access_token(
             data={"sub": str(user.id), "role": role_value}

@@ -13,6 +13,9 @@ interface Appointment {
   medical_result?: {
     diagnosis: string;
   } | null;
+  doctor?: {
+    full_name: string;
+  } | null;
 }
 
 export default function LichKhamDoctorPage() {
@@ -29,9 +32,14 @@ export default function LichKhamDoctorPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   
+  const getLocalDate = () => {
+    const tzOffset = new Date().getTimezoneOffset() * 60000;
+    return new Date(Date.now() - tzOffset).toISOString().split("T")[0];
+  };
+  
   // Doctor Filter States
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterDate, setFilterDate] = useState(today);
+  const [filterDate, setFilterDate] = useState(getLocalDate());
   const [filterStatus, setFilterStatus] = useState("booked");
 
   // Modal States
@@ -90,7 +98,7 @@ export default function LichKhamDoctorPage() {
 
   const handleClearAllFilters = () => {
     setSearchTerm("");
-    setFilterDate(today);
+    setFilterDate(getLocalDate());
     setFilterStatus("booked");
     // useEffect will trigger fetch because filterDate/Status changed
   };
@@ -141,22 +149,7 @@ export default function LichKhamDoctorPage() {
     }
   };
 
-  const handleDateContainerClick = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('.btn-clear-field')) return;
-    if (dateInputRef.current) {
-      try {
-        // @ts-ignore
-        if (typeof dateInputRef.current.showPicker === 'function') {
-          // @ts-ignore
-          dateInputRef.current.showPicker();
-        } else {
-          dateInputRef.current.focus();
-        }
-      } catch (e) {
-        dateInputRef.current.click();
-      }
-    }
-  };
+  // Removed hacky handleDateContainerClick as native picker is better
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "Tất cả các ngày";
@@ -223,13 +216,9 @@ export default function LichKhamDoctorPage() {
 
           <div className="toolbar-item-v5 date-box-v5">
             <label className="item-label-v5">Ngày khám</label>
-            <div className="date-box-v5-inner" onClick={handleDateContainerClick}>
-              <input ref={dateInputRef} type="date" className="hidden-date-v5" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
-              <div className="display-layer-v5">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                <span>{formatDate(filterDate)}</span>
-                {filterDate && <button className="btn-clear-mini" onClick={(e) => { e.stopPropagation(); setFilterDate(""); }}>&times;</button>}
-              </div>
+            <div className="input-wrap-v5">
+              <input type="date" className="native-date-input-v5" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
+              {filterDate && <button className="btn-clear-mini" style={{right: '35px'}} onClick={() => setFilterDate("")}>&times;</button>}
             </div>
           </div>
 
@@ -258,7 +247,7 @@ export default function LichKhamDoctorPage() {
           <div className="table-responsive-v5">
             <table className="doctor-table-v5">
               <thead>
-                <tr><th>Bệnh nhân</th><th>Liên lạc</th><th>Thời gian</th><th>Trạng thái</th><th>Hành động</th></tr>
+                <tr><th>Bệnh nhân</th><th>Liên lạc</th><th>Thời gian</th><th>Bác sĩ</th><th>Trạng thái</th><th>Hành động</th></tr>
               </thead>
               <tbody>
                 {loading ? (
@@ -275,6 +264,7 @@ export default function LichKhamDoctorPage() {
                         <td><div className="name-bold">{info.name}</div></td>
                         <td><div className="tag-phone">{info.phone}</div></td>
                         <td><div className="time-group"><span className="day-text">{formatDate(apt.appointment_date)}</span><span className="hour-text">{apt.appointment_time}</span></div></td>
+                        <td><div className="doctor-tag">{apt.doctor ? apt.doctor.full_name : "Chưa xếp"}</div></td>
                         <td><span className={`pill-status ${isCancelled ? 'pill-cancelled' : isCompleted ? 'pill-completed' : 'pill-booked'}`}>{isCancelled ? "Đã hủy" : isCompleted ? "Đã khám bệnh" : "Đã đặt"}</span></td>
                         <td>
                           <div className="action-btns-v5">
@@ -307,6 +297,7 @@ export default function LichKhamDoctorPage() {
               <div className="item-v5"><label>Số điện thoại</label><p>{parseSymptoms(selectedApt.symptoms).phone}</p></div>
               <div className="item-v5"><label>Ngày sinh</label><p>{formatDate(parseSymptoms(selectedApt.symptoms).dob)}</p></div>
               <div className="item-v5"><label>Trạng thái</label><p style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : selectedApt.status === 'completed' ? '#2563eb' : '#059669', fontWeight: 700 }}>{selectedApt.status === "cancelled" ? "Đã hủy" : selectedApt.status === "completed" ? "Đã khám bệnh" : "Đã đặt"}</p></div>
+              <div className="item-v5"><label>Bác sĩ</label><p>{selectedApt.doctor ? selectedApt.doctor.full_name : "Chưa có"}</p></div>
               <div className="item-v5"><label>Ngày khám</label><p>{formatDate(selectedApt.appointment_date)}</p></div>
               <div className="item-v5"><label>Giờ khám</label><p>{selectedApt.appointment_time}</p></div>
               <div className="item-v5 full-v5"><label>Lý do khám / Triệu chứng</label><div className="reason-text">{parseSymptoms(selectedApt.symptoms).reason}</div></div>
@@ -375,9 +366,8 @@ export default function LichKhamDoctorPage() {
         .input-wrap-v5 input { width: 100%; padding: 10px 32px 10px 36px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; outline: none; transition: 0.2s; }
 
         .date-box-v5 { width: 100%; }
-        .date-box-v5-inner { position: relative; height: 40px; cursor: pointer; }
-        .hidden-date-v5 { position: absolute; inset: 0; opacity: 0; z-index: 5; pointer-events: none; }
-        .display-layer-v5 { position: absolute; inset: 0; display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.85rem; font-weight: 600; color: #1e293b; z-index: 1; }
+        .native-date-input-v5 { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.9rem; font-weight: 600; color: #1e293b; outline: none; cursor: pointer; appearance: auto; transition: 0.2s; font-family: inherit; }
+        .native-date-input-v5:focus { border-color: #059669; box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12); background: white; }
 
         .status-box-v5 { width: 100%; }
         .select-wrap-v5 { position: relative; display: flex; align-items: center; }
@@ -410,6 +400,7 @@ export default function LichKhamDoctorPage() {
         .time-group { display: flex; flex-direction: column; }
         .day-text { font-weight: 600; color: #334155; }
         .hour-text { font-size: 0.8rem; color: #94a3b8; }
+        .doctor-tag { font-size: 0.85rem; font-weight: 600; color: #059669; background: #ecfdf5; padding: 4px 8px; border-radius: 4px; display: inline-block; }
         
         .pill-status { padding: 4px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
         .pill-booked { background: #d1fae5; color: #065f46; }
@@ -468,8 +459,9 @@ export default function LichKhamDoctorPage() {
           .doctor-table-v5 td:nth-child(1)::before { content: "Bệnh nhân"; }
           .doctor-table-v5 td:nth-child(2)::before { content: "Liên lạc"; }
           .doctor-table-v5 td:nth-child(3)::before { content: "Thời gian"; }
-          .doctor-table-v5 td:nth-child(4)::before { content: "Trạng thái"; }
-          .doctor-table-v5 td:nth-child(5)::before { content: "Hành động"; align-self: start; padding-top: 8px; }
+          .doctor-table-v5 td:nth-child(4)::before { content: "Bác sĩ"; }
+          .doctor-table-v5 td:nth-child(5)::before { content: "Trạng thái"; }
+          .doctor-table-v5 td:nth-child(6)::before { content: "Hành động"; align-self: start; padding-top: 8px; }
           .status-cell-v5 {
             display: block !important;
             padding: 36px 12px !important;

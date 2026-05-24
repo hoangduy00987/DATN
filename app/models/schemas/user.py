@@ -19,6 +19,7 @@ class UserCreate(BaseModel):
     full_name: str
     phone: Optional[str] = None
     role: RoleEnum = RoleEnum.patient
+    status: Optional[str] = "active"
 
     @field_validator("phone")
     @classmethod
