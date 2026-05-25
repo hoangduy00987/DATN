@@ -8,6 +8,7 @@ interface User {
     full_name: string;
     phone: string | null;
     role: string;
+    gender: string | null;
     status: string;
 }
 
@@ -38,6 +39,7 @@ export default function UserManagementPage() {
         full_name: "",
         phone: "",
         role: "patient",
+        gender: "Nam",
         status: "active"
     });
     const [fieldErrors, setFieldErrors] = useState({
@@ -89,6 +91,7 @@ export default function UserManagementPage() {
             full_name: "",
             phone: "",
             role: "patient",
+            gender: "Nam",
             status: "active"
         });
         setFormError("");
@@ -105,6 +108,7 @@ export default function UserManagementPage() {
             full_name: user.full_name,
             phone: user.phone || "",
             role: user.role,
+            gender: user.gender || "Nam",
             status: user.status
         });
         setFormError("");
@@ -273,6 +277,7 @@ export default function UserManagementPage() {
                                     <th>Người dùng</th>
                                     <th>Email</th>
                                     <th>Vai trò</th>
+                                    <th>Giới tính</th>
                                     <th>Số điện thoại</th>
                                     <th>Trạng thái</th>
                                     <th>Hành động</th>
@@ -293,6 +298,7 @@ export default function UserManagementPage() {
                                                     {user.role === 'admin' ? 'Admin' : user.role === 'doctor' ? 'Bác sĩ' : 'Bệnh nhân'}
                                                 </span>
                                             </td>
+                                            <td><div className="gender-text">{user.gender || "Chưa cập nhật"}</div></td>
                                             <td><div className="tag-phone">{user.phone || "N/A"}</div></td>
                                             <td>
                                                 <span className={`pill-status status-${user.status}`}>
@@ -382,6 +388,18 @@ export default function UserManagementPage() {
                                     >
                                         <option value="patient">Bệnh nhân</option>
                                         <option value="doctor">Bác sĩ</option>
+                                    </select>
+                                </div>
+                                <div className="item-v5">
+                                    <label>Giới tính</label>
+                                    <select
+                                        className="form-select-v5"
+                                        value={formData.gender}
+                                        onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                                    >
+                                        <option value="Nam">Nam</option>
+                                        <option value="Nữ">Nữ</option>
+                                        <option value="Khác">Khác</option>
                                     </select>
                                 </div>
                                 <div className="item-v5">

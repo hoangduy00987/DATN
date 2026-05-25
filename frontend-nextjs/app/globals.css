@@ -1171,3 +1171,187 @@ a.btn-primary:hover {
   overflow-y: auto;
   position: relative;
 }
+
+/* ================================================================
+   GLOBAL RESPONSIVE FIXES — All Pages
+   ================================================================ */
+
+/* Appointment Page and Card */
+@media (max-width: 768px) {
+  .appointment-page-container {
+    padding: 10px !important;
+  }
+
+  .appointment-card {
+    padding: 20px 16px;
+    border-radius: 10px;
+  }
+
+  .appointment-header {
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .header-text h1 {
+    font-size: 1.25rem;
+  }
+
+  .header-text p {
+    font-size: 0.85rem;
+  }
+
+  /* Form Grid: 2 cols -> 1 col */
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .form-group.full-width {
+    grid-column: span 1;
+  }
+
+  .form-actions {
+    margin-top: 32px;
+    justify-content: center;
+  }
+
+  .btn-submit {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Tables — horizontal scroll on small screens */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modern-table {
+    min-width: 580px;
+  }
+
+  /* Doctor toolbar */
+  .doctor-toolbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .filter-group.search,
+  .filter-group.date,
+  .filter-group.status {
+    width: 100%;
+  }
+
+  .mini-select,
+  .native-date-input-v5 {
+    width: 100%;
+  }
+
+  /* Notification popover */
+  .notif-popover {
+    width: calc(100vw - 32px);
+    left: auto;
+    right: 0;
+  }
+
+  /* Admin/user-mgmt toolbar */
+  .admin-toolbar-v5 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modal */
+  .modal-premium-content,
+  .modal-container-v5 {
+    width: 95% !important;
+    max-width: 95% !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-grid-v5,
+  .modal-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .info-block.full {
+    grid-column: span 1 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .appointment-card {
+    padding: 16px 12px;
+  }
+
+  .appointment-header {
+    margin-bottom: 18px;
+  }
+
+  .header-text h1 {
+    font-size: 1.1rem;
+  }
+
+  /* Admin table */
+  .admin-table-v5 {
+    min-width: 640px;
+  }
+
+  .admin-card {
+    padding: 16px 12px !important;
+  }
+
+  .admin-header-v2 {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .btn-add-user {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Modal footer stacking */
+  .modal-footer-v5,
+  .modal-actions-v2-right {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .btn-close-v5,
+  .btn-primary-v2,
+  .btn-secondary-v2,
+  .btn-danger-v2,
+  .equal-btn {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+
+  /* Star rating */
+  .star-rating-input button {
+    font-size: 24px !important;
+  }
+
+  /* Table action buttons smaller */
+  .action-group-premium-left,
+  .action-btns-v5 {
+    gap: 4px !important;
+  }
+}
+
+/* Notification top header padding on mobile */
+@media (max-width: 480px) {
+  .chat-top-header {
+    padding: 0 12px;
+  }
+}
+
+/* no-reviews message */
+.no-reviews {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 1rem;
+  padding: 40px 20px;
+  grid-column: 1 / -1;
+}

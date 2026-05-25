@@ -31,12 +31,12 @@ export default function LichKhamDoctorPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  
+
   const getLocalDate = () => {
     const tzOffset = new Date().getTimezoneOffset() * 60000;
     return new Date(Date.now() - tzOffset).toISOString().split("T")[0];
   };
-  
+
   // Doctor Filter States
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState(getLocalDate());
@@ -68,7 +68,7 @@ export default function LichKhamDoctorPage() {
       if (filterDate) params.append("date", filterDate);
       if (filterStatus && filterStatus !== "all") params.append("status", filterStatus);
       if (searchTerm.trim()) params.append("search", searchTerm.trim());
-      
+
       const queryString = params.toString();
       const response = await fetch(`http://localhost:8000/api/v1/appointments/all${queryString ? `?${queryString}` : ""}`, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -208,7 +208,7 @@ export default function LichKhamDoctorPage() {
           <div className="toolbar-item-v5 search-box-v5">
             <label className="item-label-v5">Tìm bệnh nhân</label>
             <div className="input-wrap-v5">
-              <svg className="search-icon-v5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <svg className="search-icon-v5" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
               <input type="text" placeholder="Tên hoặc SĐT..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && fetchAppointments()} />
               {searchTerm && <button className="btn-clear-mini" onClick={() => setSearchTerm("")}>&times;</button>}
             </div>
@@ -218,7 +218,7 @@ export default function LichKhamDoctorPage() {
             <label className="item-label-v5">Ngày khám</label>
             <div className="input-wrap-v5">
               <input type="date" className="native-date-input-v5" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
-              {filterDate && <button className="btn-clear-mini" style={{right: '35px'}} onClick={() => setFilterDate("")}>&times;</button>}
+              {filterDate && <button className="btn-clear-mini" style={{ right: '35px' }} onClick={() => setFilterDate("")}>&times;</button>}
             </div>
           </div>
 
@@ -237,7 +237,7 @@ export default function LichKhamDoctorPage() {
 
           <div className="toolbar-actions-v5">
             <button className="btn-main-v5 btn-reset-v5" onClick={handleClearAllFilters} title="Xóa tất cả bộ lọc">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" /></svg>
               <span>Xóa lọc</span>
             </button>
           </div>
@@ -247,7 +247,7 @@ export default function LichKhamDoctorPage() {
           <div className="table-responsive-v5">
             <table className="doctor-table-v5">
               <thead>
-                <tr><th>Bệnh nhân</th><th>Liên lạc</th><th>Thời gian</th><th>Bác sĩ</th><th>Trạng thái</th><th>Hành động</th></tr>
+                <tr><th>Bệnh nhân</th><th>Liên lạc</th><th>Thời gian</th><th>Trạng thái</th><th>Hành động</th></tr>
               </thead>
               <tbody>
                 {loading ? (
@@ -264,16 +264,15 @@ export default function LichKhamDoctorPage() {
                         <td><div className="name-bold">{info.name}</div></td>
                         <td><div className="tag-phone">{info.phone}</div></td>
                         <td><div className="time-group"><span className="day-text">{formatDate(apt.appointment_date)}</span><span className="hour-text">{apt.appointment_time}</span></div></td>
-                        <td><div className="doctor-tag">{apt.doctor ? apt.doctor.full_name : "Chưa xếp"}</div></td>
                         <td><span className={`pill-status ${isCancelled ? 'pill-cancelled' : isCompleted ? 'pill-completed' : 'pill-booked'}`}>{isCancelled ? "Đã hủy" : isCompleted ? "Đã khám bệnh" : "Đã đặt"}</span></td>
                         <td>
                           <div className="action-btns-v5">
                             <button className="btn-act btn-detail-v5" onClick={() => { setSelectedApt(apt); setShowDetailModal(true); }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                               <span>Chi tiết</span>
                             </button>
                             <button className="btn-act btn-send-v5" disabled={isCancelled} onClick={() => handleSendResult(apt)}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
                               <span>Gửi kết quả</span>
                             </button>
                           </div>
@@ -297,7 +296,7 @@ export default function LichKhamDoctorPage() {
               <div className="item-v5"><label>Số điện thoại</label><p>{parseSymptoms(selectedApt.symptoms).phone}</p></div>
               <div className="item-v5"><label>Ngày sinh</label><p>{formatDate(parseSymptoms(selectedApt.symptoms).dob)}</p></div>
               <div className="item-v5"><label>Trạng thái</label><p style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : selectedApt.status === 'completed' ? '#2563eb' : '#059669', fontWeight: 700 }}>{selectedApt.status === "cancelled" ? "Đã hủy" : selectedApt.status === "completed" ? "Đã khám bệnh" : "Đã đặt"}</p></div>
-              <div className="item-v5"><label>Bác sĩ</label><p>{selectedApt.doctor ? selectedApt.doctor.full_name : "Chưa có"}</p></div>
+
               <div className="item-v5"><label>Ngày khám</label><p>{formatDate(selectedApt.appointment_date)}</p></div>
               <div className="item-v5"><label>Giờ khám</label><p>{selectedApt.appointment_time}</p></div>
               <div className="item-v5 full-v5"><label>Lý do khám / Triệu chứng</label><div className="reason-text">{parseSymptoms(selectedApt.symptoms).reason}</div></div>
@@ -459,9 +458,8 @@ export default function LichKhamDoctorPage() {
           .doctor-table-v5 td:nth-child(1)::before { content: "Bệnh nhân"; }
           .doctor-table-v5 td:nth-child(2)::before { content: "Liên lạc"; }
           .doctor-table-v5 td:nth-child(3)::before { content: "Thời gian"; }
-          .doctor-table-v5 td:nth-child(4)::before { content: "Bác sĩ"; }
-          .doctor-table-v5 td:nth-child(5)::before { content: "Trạng thái"; }
-          .doctor-table-v5 td:nth-child(6)::before { content: "Hành động"; align-self: start; padding-top: 8px; }
+          .doctor-table-v5 td:nth-child(4)::before { content: "Trạng thái"; }
+          .doctor-table-v5 td:nth-child(5)::before { content: "Hành động"; align-self: start; padding-top: 8px; }
           .status-cell-v5 {
             display: block !important;
             padding: 36px 12px !important;

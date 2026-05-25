@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Enum, Date, Time, Boolean
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Enum, Date, Time, Boolean, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.sql import func
@@ -22,6 +22,7 @@ class User(Base):
     phone = Column(String(20), nullable=True)
     role = Column(Enum(RoleEnum), default=RoleEnum.patient, nullable=False)
     avatar_url = Column(Text, nullable=True)
+    gender = Column(String(20), nullable=True)
     status = Column(String(50), default="active")
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -104,3 +105,26 @@ class Notification(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", backref="notifications")
+
+
+class Review(Base):
+    __tablename__ = "reviews"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    appointment_id = Column(UUID(as_uuid=True), ForeignKey("appointments.id"), nullable=False)
+    patient_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    doctor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    
+    rating = Column(Enum("1", "2", "3", "4", "5", name="rating_enum"), nullable=False)
+    comment = Column(Text, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint('patient_id', 'doctor_id', name='unique_patient_doctor_review'),
+    )
+
+    appointment = relationship("Appointment", backref="review")
+    patient = relationship("User", foreign_keys=[patient_id], backref="patient_reviews")
+    doctor = relationship("User", foreign_keys=[doctor_id], backref="doctor_reviews")

@@ -8,6 +8,7 @@ interface Appointment {
   id: string;
   appointment_date: string;
   appointment_time: string;
+  doctor_id: string | null;
   status: string;
   symptoms: string;
   created_at: string;
@@ -65,6 +66,12 @@ function LichDaDatContent() {
   const [showResultEntryModal, setShowResultEntryModal] = useState(false);
   const [diagnosis, setDiagnosis] = useState("");
   const [isSubmittingResult, setIsSubmittingResult] = useState(false);
+
+  // Review Modal States
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const isAdmin = role === "admin";
 
@@ -295,6 +302,59 @@ function LichDaDatContent() {
     }
   };
 
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedApt) return;
+    setIsSubmittingReview(true);
+    try {
+      const token = getCookie("access_token");
+      const response = await fetch(`http://localhost:8000/api/v1/reviews/`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointment_id: selectedApt.id,
+          rating: reviewRating,
+          comment: reviewComment
+        })
+      });
+      if (response.ok) {
+        setShowReviewModal(false);
+        setReviewRating(5);
+        setReviewComment("");
+        triggerToast("Đã gửi đánh giá thành công! Cảm ơn bạn.");
+      } else {
+        const d = await response.json();
+        triggerToast(d.detail || "Gửi đánh giá thất bại");
+      }
+    } catch (err) {
+      triggerToast("Lỗi kết nối");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleOpenReviewModal = async (apt: Appointment) => {
+    setSelectedApt(apt);
+    setReviewRating(0);
+    setReviewComment("");
+
+    if (apt.doctor_id) {
+      try {
+        const token = getCookie("access_token");
+        const res = await fetch(`http://localhost:8000/api/v1/reviews/my-review/${apt.doctor_id}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setReviewRating(data.rating || 0);
+          setReviewComment(data.comment || "");
+        }
+      } catch (err) { }
+    }
+
+    setShowReviewModal(true);
+  };
+
   return (
     <div className="appointment-page-container premium-ui">
       {toast.show && (
@@ -336,7 +396,7 @@ function LichDaDatContent() {
             <div className="filter-group date">
               <div className="date-input-wrap-mini">
                 <input type="date" className="native-date-input-v5" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
-                {filterDate && <button type="button" className="btn-clear-mini" style={{right: '35px'}} onClick={(e) => { e.stopPropagation(); setFilterDate(""); }}>&times;</button>}
+                {filterDate && <button type="button" className="btn-clear-mini" style={{ right: '35px' }} onClick={(e) => { e.stopPropagation(); setFilterDate(""); }}>&times;</button>}
               </div>
             </div>
             <div className="filter-group status">
@@ -368,7 +428,7 @@ function LichDaDatContent() {
             <div className="table-container">
               <table className="modern-table">
                 <thead>
-                  <tr><th>Bệnh nhân</th><th>Liên lạc</th><th>Thời gian</th><th>Bác sĩ</th><th>Trạng thái</th><th>Hành động</th></tr>
+                  <tr><th>Bệnh nhân</th><th>Liên lạc</th><th>Thời gian</th>{role !== 'doctor' && <th>Bác sĩ</th>}<th>Trạng thái</th><th>Hành động</th></tr>
                 </thead>
                 <tbody>
                   {appointments.map((apt) => {
@@ -386,7 +446,7 @@ function LichDaDatContent() {
                         <td><div className="patient-name">{info.name}</div></td>
                         <td><div className="phone-tag">{info.phone}</div></td>
                         <td><div className="datetime-cell"><span className="date-main">{formatDate(apt.appointment_date)}</span><span className="time-sub">{apt.appointment_time}</span></div></td>
-                        <td><div className="doctor-tag">{apt.doctor ? apt.doctor.full_name : "Chưa xếp"}</div></td>
+                        {role !== 'doctor' && <td><div className="doctor-tag">{apt.doctor ? apt.doctor.full_name : "Chưa xếp"}</div></td>}
                         <td>
                           <span className={`status-pill ${isCancelled ? 'status-cancelled' :
                             isCompleted ? 'status-completed' :
@@ -406,7 +466,14 @@ function LichDaDatContent() {
                             )}
 
                             {role === 'patient' && isCompleted && (
-                              <button className="act-btn result-btn" title="Xem kết quả" onClick={() => { setSelectedApt(apt); setShowResultModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg></button>
+                              <>
+                                <button className="act-btn result-btn" title="Xem kết quả" onClick={() => { setSelectedApt(apt); setShowResultModal(true); }}>
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+                                </button>
+                                <button className="act-btn review-btn" title="Đánh giá bác sĩ" onClick={() => handleOpenReviewModal(apt)}>
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                                </button>
+                              </>
                             )}
 
                             <button className="act-btn edit-btn" title="Chỉnh sửa" disabled={isLocked} onClick={() => handleEditClick(apt)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg></button>
@@ -434,7 +501,7 @@ function LichDaDatContent() {
               <div className="info-block"><span className="block-label">Số điện thoại</span><span className="block-value">{parseSymptoms(selectedApt.symptoms).phone}</span></div>
               <div className="info-block"><span className="block-label">Ngày sinh</span><span className="block-value">{formatDate(parseSymptoms(selectedApt.symptoms).dob)}</span></div>
               <div className="info-block"><span className="block-label">Trạng thái</span><span className="status-pill-mini" style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : selectedApt.status === 'completed' ? '#64748b' : selectedApt.status === 'confirmed' ? '#1e40af' : '#166534' }}>{selectedApt.status === "cancelled" ? "Đã hủy" : selectedApt.status === "completed" ? "Đã khám bệnh" : selectedApt.status === "confirmed" ? "Đã tiếp nhận" : "Đã đặt"}</span></div>
-              <div className="info-block"><span className="block-label">Bác sĩ phụ trách</span><span className="block-value">{selectedApt.doctor ? selectedApt.doctor.full_name : "Chưa có"}</span></div>
+              {role !== 'doctor' && <div className="info-block"><span className="block-label">Bác sĩ phụ trách</span><span className="block-value">{selectedApt.doctor ? selectedApt.doctor.full_name : "Chưa có"}</span></div>}
               <div className="info-block"><span className="block-label">Ngày khám</span><span className="block-value">{formatDate(selectedApt.appointment_date)}</span></div>
               <div className="info-block"><span className="block-label">Giờ khám dự kiến</span><span className="block-value">{selectedApt.appointment_time}</span></div>
               <div className="info-block full"><span className="block-label">Lý do khám / Triệu chứng</span><p className="block-text">{parseSymptoms(selectedApt.symptoms).reason}</p></div>
@@ -550,6 +617,57 @@ function LichDaDatContent() {
         </div>
       )}
 
+      {showReviewModal && selectedApt && (
+        <div className="modal-overlay-blur">
+          <div className="modal-premium-content">
+            <div className="modal-banner">
+              <h3>Đánh giá bác sĩ</h3>
+              <button className="btn-close-top" onClick={() => setShowReviewModal(false)}>&times;</button>
+            </div>
+            <form onSubmit={handleReviewSubmit}>
+              <div className="modal-grid">
+                <div className="info-block full">
+                  <span className="block-label">Bác sĩ phụ trách</span>
+                  <span className="block-value" style={{ color: '#059669' }}>{selectedApt.doctor?.full_name || "Bác sĩ hệ thống"}</span>
+                </div>
+                <div className="info-block full">
+                  <span className="block-label">Mức độ hài lòng</span>
+                  <div className="star-rating-input" style={{ display: 'flex', gap: '8px', margin: '8px 0' }}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '28px', color: star <= reviewRating ? '#f59e0b' : '#cbd5e1' }}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="info-block full">
+                  <span className="block-label">Nhận xét của bạn</span>
+                  <textarea
+                    className="edit-textarea"
+                    rows={4}
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Hãy chia sẻ cảm nhận của bạn về bác sĩ và dịch vụ..."
+                    required
+                  ></textarea>
+                </div>
+              </div>
+              <div className="modal-actions-v2-right">
+                <button type="button" className="btn-secondary-v2 equal-btn" onClick={() => setShowReviewModal(false)}>Hủy</button>
+                <button type="submit" className="btn-primary-v2 equal-btn" disabled={isSubmittingReview}>
+                  {isSubmittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         .premium-ui { background: #f1f5f9; font-family: Arial, sans-serif !important; }
         
@@ -642,6 +760,7 @@ function LichDaDatContent() {
         .view-btn:hover:not(:disabled) { background: #3b82f6; }
         .assign-btn:hover:not(:disabled) { background: #8b5cf6; }
         .result-btn:hover:not(:disabled) { background: #059669; }
+        .review-btn:hover:not(:disabled) { background: #f59e0b; }
         .edit-btn:hover:not(:disabled) { background: #f59e0b; }
         .delete-btn:hover:not(:disabled) { background: #ef4444; }
         .act-btn:disabled { opacity: 0.3; cursor: not-allowed; }

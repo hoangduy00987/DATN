@@ -11,6 +11,16 @@ const ACCESS_NOTICE: Record<"patient" | "forbidden" | "reauth", string> = {
     reauth: "Phiên đăng nhập cần làm mới. Vui lòng đăng xuất rồi đăng nhập lại.",
 };
 
+interface Review {
+    id: string;
+    doctor_name: string;
+    patient_name: string;
+    rating: number;
+    comment: string;
+    created_at: string;
+    avatar: string;
+}
+
 export default function LoginPage() {
     const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
 
@@ -31,12 +41,25 @@ export default function LoginPage() {
     const [mounted, setMounted] = useState(false);
     const [accessNotice, setAccessNotice] = useState<"patient" | "forbidden" | "reauth" | null>(null);
 
+    const [reviews, setReviews] = useState<Review[]>([]);
+
     useEffect(() => setMounted(true), []);
 
     useEffect(() => {
         const q = new URLSearchParams(window.location.search);
         const r = q.get("reason");
-        if (r === "patient" || r === "forbidden" || r === "reauth") setAccessNotice(r);
+        if (r === "patient" || r === "forbidden" || r === "reauth") setAccessNotice(r as any);
+
+        const fetchReviews = async () => {
+            try {
+                const res = await fetch("http://localhost:8000/api/v1/reviews/public");
+                if (res.ok) {
+                    const data = await res.json();
+                    setReviews(data);
+                }
+            } catch (err) { }
+        };
+        fetchReviews();
     }, []);
 
     // Reset forms when switching tabs
@@ -127,7 +150,7 @@ export default function LoginPage() {
                 setSignupError(data?.detail || "Đăng ký thất bại.");
             } else {
                 setSignupSuccess("Đăng ký thành công! Đang tự động đăng nhập...");
-                
+
                 // Auto-login after registration
                 try {
                     const loginRes = await fetch("/api/auth/login", {
@@ -187,144 +210,180 @@ export default function LoginPage() {
                     </div>
                 </section>
                 <div className="login-form-area">
-                <div className="wrapper">
-                    {accessNotice && (
-                        <div className="alert warning" style={{ marginBottom: 16 }}>
-                            {ACCESS_NOTICE[accessNotice]}
-                            <div className="notice-actions">
-                                <button type="button" onClick={handleLogout}>
-                                    Đăng xuất
-                                </button>
+                    <div className="wrapper">
+                        {accessNotice && (
+                            <div className="alert warning" style={{ marginBottom: 16 }}>
+                                {ACCESS_NOTICE[accessNotice]}
+                                <div className="notice-actions">
+                                    <button type="button" onClick={handleLogout}>
+                                        Đăng xuất
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                    {/* Title */}
-                    <div className="title-text">
-                        <div
-                            className="title"
-                            style={{ marginLeft: isLogin ? "0%" : "-50%" }}
-                        >
-                            Login Form
-                        </div>
-                        <div className="title">Signup Form</div>
-                    </div>
-
-                    <div className="form-container">
-                        {/* Tab controls */}
-                        <div className="slide-controls">
+                        )}
+                        {/* Title */}
+                        <div className="title-text">
                             <div
-                                className={`slider-tab${isLogin ? "" : " signup"}`}
-                            />
-                            <button
-                                className={`slide-btn${isLogin ? " active" : ""}`}
-                                onClick={() => setActiveTab("login")}
-                            >
-                                Login
-                            </button>
-                            <button
-                                className={`slide-btn${!isLogin ? " active" : ""}`}
-                                onClick={() => setActiveTab("signup")}
-                            >
-                                Signup
-                            </button>
-                        </div>
-
-                        {/* Forms */}
-                        <div className="form-inner">
-                            {/* ── LOGIN ── */}
-                            <form
-                                onSubmit={handleLogin}
+                                className="title"
                                 style={{ marginLeft: isLogin ? "0%" : "-50%" }}
                             >
-                                <div className="field">
-                                    <input
-                                        type="email"
-                                        placeholder="Email Address"
-                                        value={loginEmail}
-                                        onChange={e => setLoginEmail(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="field">
-                                    <input
-                                        type="password"
-                                        placeholder="Password"
-                                        value={loginPassword}
-                                        onChange={e => setLoginPassword(e.target.value)}
-                                        required
-                                    />
-                                </div>
+                                Login Form
+                            </div>
+                            <div className="title">Signup Form</div>
+                        </div>
 
-                                {loginError && (
-                                    <div className="alert error">{loginError}</div>
-                                )}
+                        <div className="form-container">
+                            {/* Tab controls */}
+                            <div className="slide-controls">
+                                <div
+                                    className={`slider-tab${isLogin ? "" : " signup"}`}
+                                />
+                                <button
+                                    className={`slide-btn${isLogin ? " active" : ""}`}
+                                    onClick={() => setActiveTab("login")}
+                                >
+                                    Login
+                                </button>
+                                <button
+                                    className={`slide-btn${!isLogin ? " active" : ""}`}
+                                    onClick={() => setActiveTab("signup")}
+                                >
+                                    Signup
+                                </button>
+                            </div>
 
-                                <div className="pass-link">
-                                    <a href="#">Forgot password?</a>
-                                </div>
+                            {/* Forms */}
+                            <div className="form-inner">
+                                {/* ── LOGIN ── */}
+                                <form
+                                    onSubmit={handleLogin}
+                                    style={{ marginLeft: isLogin ? "0%" : "-50%" }}
+                                >
+                                    <div className="field">
+                                        <input
+                                            type="email"
+                                            placeholder="Email Address"
+                                            value={loginEmail}
+                                            onChange={e => setLoginEmail(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="field">
+                                        <input
+                                            type="password"
+                                            placeholder="Password"
+                                            value={loginPassword}
+                                            onChange={e => setLoginPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
 
-                                <div className="btn-field">
-                                    <div className="btn-layer" />
-                                    <button type="submit" disabled={loginLoading}>
-                                        {loginLoading ? "Đang xử lý..." : "Login"}
-                                    </button>
-                                </div>
+                                    {loginError && (
+                                        <div className="alert error">{loginError}</div>
+                                    )}
 
-                                <div className="signup-link">
-                                    Not a member?{" "}
-                                    <a onClick={() => setActiveTab("signup")}>Signup now</a>
-                                </div>
-                            </form>
+                                    <div className="pass-link">
+                                        <a href="#">Forgot password?</a>
+                                    </div>
 
-                            {/* ── SIGNUP ── */}
-                            <form onSubmit={handleSignup}>
-                                <div className="field">
-                                    <input
-                                        type="email"
-                                        placeholder="Email Address"
-                                        value={signupEmail}
-                                        onChange={e => setSignupEmail(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="field">
-                                    <input
-                                        type="password"
-                                        placeholder="Password"
-                                        value={signupPassword}
-                                        onChange={e => setSignupPassword(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="field">
-                                    <input
-                                        type="password"
-                                        placeholder="Confirm password"
-                                        value={signupConfirm}
-                                        onChange={e => setSignupConfirm(e.target.value)}
-                                        required
-                                    />
-                                </div>
+                                    <div className="btn-field">
+                                        <div className="btn-layer" />
+                                        <button type="submit" disabled={loginLoading}>
+                                            {loginLoading ? "Đang xử lý..." : "Login"}
+                                        </button>
+                                    </div>
 
-                                {signupError && (
-                                    <div className="alert error">{signupError}</div>
-                                )}
-                                {signupSuccess && (
-                                    <div className="alert success">{signupSuccess}</div>
-                                )}
+                                    <div className="signup-link">
+                                        Not a member?{" "}
+                                        <a onClick={() => setActiveTab("signup")}>Signup now</a>
+                                    </div>
+                                </form>
 
-                                <div className="btn-field">
-                                    <div className="btn-layer" />
-                                    <button type="submit" disabled={signupLoading}>
-                                        {signupLoading ? "Đang xử lý..." : "Signup"}
-                                    </button>
-                                </div>
-                            </form>
+                                {/* ── SIGNUP ── */}
+                                <form onSubmit={handleSignup}>
+                                    <div className="field">
+                                        <input
+                                            type="email"
+                                            placeholder="Email Address"
+                                            value={signupEmail}
+                                            onChange={e => setSignupEmail(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="field">
+                                        <input
+                                            type="password"
+                                            placeholder="Password"
+                                            value={signupPassword}
+                                            onChange={e => setSignupPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="field">
+                                        <input
+                                            type="password"
+                                            placeholder="Confirm password"
+                                            value={signupConfirm}
+                                            onChange={e => setSignupConfirm(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+
+                                    {signupError && (
+                                        <div className="alert error">{signupError}</div>
+                                    )}
+                                    {signupSuccess && (
+                                        <div className="alert success">{signupSuccess}</div>
+                                    )}
+
+                                    <div className="btn-field">
+                                        <div className="btn-layer" />
+                                        <button type="submit" disabled={signupLoading}>
+                                            {signupLoading ? "Đang xử lý..." : "Signup"}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
-                </div>
             </div>
+
+            {/* Reviews Section */}
+            <section className="reviews-section">
+                <div className="reviews-container">
+                    <div className="reviews-header">
+                        <h2>Đánh giá từ bệnh nhân</h2>
+                        <p>Những bệnh nhân đã tin tưởng và hài lòng với chất lượng dịch vụ của LungCare</p>
+                    </div>
+                    <div className="reviews-grid">
+                        {reviews.length > 0 ? (
+                            reviews.map(rev => (
+                                <div key={rev.id} className="review-card">
+                                    <div className="review-doctor-info">
+                                        <span className="review-avatar">{rev.avatar}</span>
+                                        <div>
+                                            <h3 className="doctor-name">{rev.doctor_name}</h3>
+                                        </div>
+                                    </div>
+                                    <div className="review-stars">
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                            <span key={i} className={i < rev.rating ? "star filled" : "star"}>★</span>
+                                        ))}
+                                    </div>
+                                    <p className="review-comment">"{rev.comment}"</p>
+                                    <div className="review-footer">
+                                        <span className="patient-name">{rev.patient_name}</span>
+                                        <span className="review-date">{new Date(rev.created_at).toLocaleDateString('vi-VN')}</span>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="no-reviews">Chưa có đánh giá nào.</div>
+                        )}
+                    </div>
+                </div>
+            </section>
         </div>
     );
 }

@@ -19,6 +19,7 @@ class UserCreate(BaseModel):
     full_name: str
     phone: Optional[str] = None
     role: RoleEnum = RoleEnum.patient
+    gender: Optional[str] = None
     status: Optional[str] = "active"
 
     @field_validator("phone")
@@ -31,6 +32,7 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     phone: Optional[str] = None
     role: Optional[RoleEnum] = None
+    gender: Optional[str] = None
     status: Optional[str] = None
     password: Optional[str] = None
 
@@ -45,6 +47,7 @@ class UserOut(BaseModel):
     full_name: str
     phone: Optional[str] = None
     role: RoleEnum
+    gender: Optional[str] = None
     status: str
 
     class Config:
