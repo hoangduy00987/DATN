@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     phone VARCHAR(50),
     role VARCHAR(50) DEFAULT 'patient', -- doctor/patient/admin
     avatar_url TEXT,
+    gender VARCHAR(20),
     status VARCHAR(50) DEFAULT 'active',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -65,4 +66,19 @@ CREATE TABLE IF NOT EXISTS notifications (
     link VARCHAR(255),
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. REVIEWS table
+CREATE TYPE rating_enum AS ENUM ('1', '2', '3', '4', '5');
+
+CREATE TABLE IF NOT EXISTS reviews (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    appointment_id UUID NOT NULL REFERENCES appointments(id) ON DELETE CASCADE,
+    patient_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    doctor_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    rating rating_enum NOT NULL,
+    comment TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_patient_doctor_review UNIQUE (patient_id, doctor_id)
 );

@@ -5,6 +5,7 @@ load_dotenv()
 
 class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    COHERE_API_KEY = os.getenv("COHERE_API_KEY")
     CHROMA_DIR = "./data/chroma_db"
     COLLECTION_NAME = "lung_rag"
     INPUT_FILE = "data/processed/output_rag_ready.jsonl"
