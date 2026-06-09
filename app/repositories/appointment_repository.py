@@ -66,7 +66,10 @@ class AppointmentRepository:
             query = query.filter(Appointment.appointment_date == date)
 
         if status and status.strip() and status != "all":
-            query = query.filter(Appointment.status == status)
+            if status == "booked":
+                query = query.filter(Appointment.status.in_(["booked", "confirmed", "pending"]))
+            else:
+                query = query.filter(Appointment.status == status)
 
         if search_value:
             query = query.filter(

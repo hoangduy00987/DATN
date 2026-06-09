@@ -1063,7 +1063,7 @@ a.btn-primary:hover {
 .notif-popover {
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
+  right: 0;
   width: 320px;
   background: white;
   border-radius: 12px;

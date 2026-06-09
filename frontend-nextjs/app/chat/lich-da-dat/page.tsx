@@ -435,8 +435,7 @@ function LichDaDatContent() {
                     const info = parseSymptoms(apt.symptoms);
                     const isCancelled = apt.status === "cancelled";
                     const isCompleted = apt.status === "completed";
-                    const isConfirmed = apt.status === "confirmed";
-                    const isLocked = isCancelled || isCompleted || isConfirmed;
+                    const isLocked = isCancelled || isCompleted;
                     return (
                       <tr
                         key={apt.id}
@@ -449,17 +448,16 @@ function LichDaDatContent() {
                         {role !== 'doctor' && <td><div className="doctor-tag">{apt.doctor ? apt.doctor.full_name : "Chưa xếp"}</div></td>}
                         <td>
                           <span className={`status-pill ${isCancelled ? 'status-cancelled' :
-                            isCompleted ? 'status-completed' :
-                              isConfirmed ? 'status-confirmed' : 'status-booked'
+                            isCompleted ? 'status-completed' : 'status-booked'
                             }`}>
-                            {isCancelled ? "Đã hủy" : isCompleted ? "Đã khám bệnh" : isConfirmed ? "Đã tiếp nhận" : "Đã đặt"}
+                            {isCancelled ? "Đã hủy" : isCompleted ? "Đã khám bệnh" : "Đã đặt"}
                           </span>
                         </td>
                         <td>
                           <div className="action-group-premium-left">
                             <button className="act-btn view-btn" title="Xem chi tiết" onClick={() => { setSelectedApt(apt); setShowDetailModal(true); }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg></button>
 
-                            {role === 'doctor' && (apt.status === 'booked' || apt.status === 'confirmed') && (
+                            {(role === 'doctor' || role === 'admin') && (apt.status === 'booked' || apt.status === 'confirmed' || apt.status === 'pending') && (
                               <button className="act-btn edit-btn" style={{ background: '#059669', color: 'white' }} title="Gửi kết quả" onClick={() => { setSelectedApt(apt); setDiagnosis(apt.medical_result?.diagnosis || ""); setShowResultEntryModal(true); }}>
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
                               </button>
@@ -500,7 +498,7 @@ function LichDaDatContent() {
               <div className="info-block"><span className="block-label">Họ và tên</span><span className="block-value">{parseSymptoms(selectedApt.symptoms).name}</span></div>
               <div className="info-block"><span className="block-label">Số điện thoại</span><span className="block-value">{parseSymptoms(selectedApt.symptoms).phone}</span></div>
               <div className="info-block"><span className="block-label">Ngày sinh</span><span className="block-value">{formatDate(parseSymptoms(selectedApt.symptoms).dob)}</span></div>
-              <div className="info-block"><span className="block-label">Trạng thái</span><span className="status-pill-mini" style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : selectedApt.status === 'completed' ? '#64748b' : selectedApt.status === 'confirmed' ? '#1e40af' : '#166534' }}>{selectedApt.status === "cancelled" ? "Đã hủy" : selectedApt.status === "completed" ? "Đã khám bệnh" : selectedApt.status === "confirmed" ? "Đã tiếp nhận" : "Đã đặt"}</span></div>
+              <div className="info-block"><span className="block-label">Trạng thái</span><span className="status-pill-mini" style={{ color: selectedApt.status === 'cancelled' ? '#ef4444' : selectedApt.status === 'completed' ? '#64748b' : '#166534' }}>{selectedApt.status === "cancelled" ? "Đã hủy" : selectedApt.status === "completed" ? "Đã khám bệnh" : "Đã đặt"}</span></div>
               {role !== 'doctor' && <div className="info-block"><span className="block-label">Bác sĩ phụ trách</span><span className="block-value">{selectedApt.doctor ? selectedApt.doctor.full_name : "Chưa có"}</span></div>}
               <div className="info-block"><span className="block-label">Ngày khám</span><span className="block-value">{formatDate(selectedApt.appointment_date)}</span></div>
               <div className="info-block"><span className="block-label">Giờ khám dự kiến</span><span className="block-value">{selectedApt.appointment_time}</span></div>

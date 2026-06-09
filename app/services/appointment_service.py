@@ -262,8 +262,8 @@ class AppointmentService:
         NotificationRepository.create(
             db,
             user_id=appointment.patient_id,
-            title="Lịch khám đã được tiếp nhận",
-            message=f"Lịch khám ngày {formatted_date} của bạn đã được bác sĩ tiếp nhận.",
+            title="Lịch khám đã được sắp xếp",
+            message=f"Lịch khám ngày {formatted_date} của bạn đã được sắp xếp bác sĩ.",
             link=f"/chat/lich-da-dat?highlight={appointment.id}"
         )
 

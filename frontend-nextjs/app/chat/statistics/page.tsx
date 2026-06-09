@@ -105,7 +105,7 @@ export default function StatisticsPage() {
                     <div className="stat-info">
                         <h3>Lượt đặt khám</h3>
                         <div className="stat-value">{overview?.appointments.total}</div>
-                        <p>{overview?.appointments.pending} lượt đang chờ duyệt</p>
+                        <p>{overview?.appointments.pending} lượt đang chờ khám</p>
                     </div>
                 </div>
                 <div className="stat-card">
