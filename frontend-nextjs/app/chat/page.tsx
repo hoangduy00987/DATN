@@ -76,11 +76,11 @@ export default function HomePage() {
       text: "Xin chào, tôi là AI LungCare. Tôi có thể giúp gì cho bạn về các bệnh lý phổi?",
     },
   ]);
-  const STORAGE_KEY = "chat_messages_v1";
+  const [userInfo, setUserInfo] = useState<any | null>(null);
+  const [loadedUserKey, setLoadedUserKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
   const [loadingText, setLoadingText] = useState("Đang suy nghĩ...");
-  const [hasLoaded, setHasLoaded] = useState(false); // Flag to prevent overwriting during initial load
   const chatRef = useRef<HTMLDivElement>(null);
 
   const canSend = useMemo(
@@ -420,26 +420,69 @@ export default function HomePage() {
   const triggerDocSelect = () => docInputRef.current?.click();
 
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const fetchUser = async () => {
+      try {
+        const getCookie = (name: string) => {
+          if (typeof document === "undefined") return null;
+          const value = `; ${document.cookie}`;
+          const parts = value.split(`; ${name}=`);
+          if (parts.length === 2) return parts.pop()?.split(";").shift();
+          return null;
+        };
+        const token = getCookie("access_token");
+        if (token) {
+          const res = await fetch("http://localhost:8000/api/v1/auth/me", {
+            headers: { "Authorization": `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setUserInfo(data);
+          }
+        }
+      } catch (e) {
+        console.error("Error fetching user profile for chat history:", e);
+      }
+    };
+    fetchUser();
+  }, []);
+
+  useEffect(() => {
+    const key = userInfo ? `chat_messages_${userInfo.id}` : "chat_messages_guest";
+    const raw = localStorage.getItem(key);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
           setMessages(parsed);
+        } else {
+          setMessages([
+            {
+              role: "bot",
+              text: "Xin chào, tôi là AI LungCare. Tôi có thể giúp gì cho bạn về các bệnh lý phổi?",
+            },
+          ]);
         }
       } catch (e) {
         console.error("Lỗi đọc lịch sử chat:", e);
       }
+    } else {
+      setMessages([
+        {
+          role: "bot",
+          text: "Xin chào, tôi là AI LungCare. Tôi có thể giúp gì cho bạn về các bệnh lý phổi?",
+        },
+      ]);
     }
-    setHasLoaded(true); // Mark as loaded
-  }, []);
+    setLoadedUserKey(key);
+  }, [userInfo]);
 
   useEffect(() => {
-    if (hasLoaded) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    const key = userInfo ? `chat_messages_${userInfo.id}` : "chat_messages_guest";
+    if (loadedUserKey === key) {
+      localStorage.setItem(key, JSON.stringify(messages));
     }
     scrollToBottom();
-  }, [messages, loading, hasLoaded]);
+  }, [messages, loading, loadedUserKey, userInfo]);
 
   return (
     <>
