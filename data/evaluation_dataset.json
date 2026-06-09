@@ -1,0 +1,182 @@
+[
+  {
+    "question": "Bệnh lao phổi do nguyên nhân nào gây ra?",
+    "ground_truth": "Bệnh lao phổi là bệnh truyền nhiễm qua đường hô hấp, gây ra bởi vi khuẩn lao Mycobacterium tuberculosis."
+  },
+  {
+    "question": "Bệnh lao phổi lây truyền qua đường nào?",
+    "ground_truth": "Vi khuẩn lao lây qua đường hô hấp. Nguồn lây bệnh là người hoặc động vật nhiễm bệnh."
+  },
+  {
+    "question": "Liệu cứ nhiễm vi khuẩn lao là sẽ mắc bệnh lao phổi không?",
+    "ground_truth": "Không phải cứ nhiễm vi khuẩn lao là mắc bệnh lao phổi. Điều này còn phụ thuộc vào sức đề kháng của cơ thể mỗi người. Người có sức đề kháng yếu sẽ bị vi khuẩn tấn công và bệnh biểu hiện ra bên ngoài có thể rất nhanh. Ngược lại, người có sức đề kháng tốt, vi khuẩn lao sẽ phát rất chậm, hoặc là không phát bệnh."
+  },
+  {
+    "question": "Bệnh lao phổi là bệnh gì và nguyên nhân gây ra bệnh là gì?",
+    "ground_truth": "Bệnh lao (còn gọi là TB) là một bệnh truyền nhiễm do vi trùng lao gây nên. Nếu vi trùng lao thâm nhập vào một cơ quan nào đó trong cơ thể và sinh sôi đồng thời cơ thể không thể chống lại nó, khi đó sẽ hình thành bệnh lao."
+  },
+  {
+    "question": "Bệnh lao phổi có thể lây lan như thế nào và mức độ lây nhiễm ra sao?",
+    "ground_truth": "Bệnh lao phổi là nguồn lây chính cho người xung quanh. Một người bệnh lao phổi có thể lây nhiễm cho 10 - 15 người khác thông qua tiếp xúc gần trong 1 năm."
+  },
+  {
+    "question": "Làm thế nào để chẩn đoán một người mắc bệnh lao phổi?",
+    "ground_truth": "Đối với người bị nghi ngờ mắc bệnh lao phổi, nếu xét nghiệm soi đờm trực tiếp thấy có vi khuẩn lao thì người bệnh được chẩn đoán là lao phổi AFB(+) và ngược lại là lao phổi AFB(-)."
+  },
+  {
+    "question": "Bệnh lao phổi có những triệu chứng phổ biến nào để tôi có thể nhận biết?",
+    "ground_truth": "Các triệu chứng thường gặp ở người mắc bệnh lao phổi bao gồm: Đau ngực, thở khò khè hoặc khó thở, ho (thường có đờm, đôi khi có máu), sốt, mệt mỏi, sụt cân."
+  },
+  {
+    "question": "Nguyên nhân gây bệnh lao phổi là gì và những đối tượng nào có nguy cơ mắc bệnh cao hơn?",
+    "ground_truth": "Bệnh lao phổi là một bệnh nhiễm trùng nghiêm trọng do vi khuẩn Mycobacterium tuberculosis gây ra, ảnh hưởng đến phổi nhưng có thể lây lan sang các cơ quan khác. Bệnh lao là một bệnh truyền nhiễm có thể lây nhiễm cho bất kỳ ai tiếp xúc với vi khuẩn này. Một số tình trạng sức khỏe khiến hệ thống miễn dịch suy yếu có thể khiến con người dễ mắc bệnh lao hơn, bao gồm: Bệnh tiểu đường, thuốc điều trị bệnh tự miễn, hóa trị ung thư, bệnh HIV,… Người cao tuổi, trẻ em với hệ miễn dịch suy yếu cũng có nguy cơ mắc bệnh lao phổi cao hơn."
+  },
+  {
+    "question": "Bệnh lao phổi có thể chữa khỏi được không và làm thế nào để biết chắc chắn đã khỏi bệnh hoàn toàn?",
+    "ground_truth": "Người bị bệnh lao phổi khi được điều trị bằng những phương pháp chữa bệnh phù hợp có thể khỏi bệnh, hồi phục các tổn thương ở phổi. Nhiều trường hợp lựa chọn cách trị bệnh lao phổi đúng, phù hợp còn giúp người bệnh có thể khỏi bệnh hoàn toàn. Sau khi điều trị lao phổi, người bệnh cần thực hiện các xét nghiệm để đánh giá mức độ hiệu quả của phương pháp điều trị. Bác sĩ sẽ dựa trên kết quả của các xét nghiệm này để kết luận người bệnh đã được chữa khỏi hoàn toàn chưa, có cần áp dụng thêm các biện pháp điều trị, chăm sóc sức khỏe nào khác không."
+  },
+  {
+    "question": "Bệnh lao phổi là gì và do nguyên nhân nào gây ra?",
+    "ground_truth": "Bệnh lao phổi là một bệnh truyền nhiễm gây ra bởi vi khuẩn lao Mycobacterium tuberculosis hay còn gọi là trực khuẩn Koch. Bệnh hình thành khi vi trùng lao thâm nhập vào trong một cơ quan bất kỳ của cơ thể rồi phát triển và cơ thể không có đủ điều kiện chống lại chúng."
+  },
+  {
+    "question": "Vi khuẩn lao phổi lây lan như thế nào trong cộng đồng?",
+    "ground_truth": "Vi khuẩn lao Mycobacterium tuberculosis có thể lây lan mạnh mẽ trong cộng đồng khi gặp điều kiện thuận lợi. Vi khuẩn này lây lan trực tiếp từ người sang người."
+  },
+  {
+    "question": "Ngoài phổi, bệnh lao có thể xuất hiện ở những bộ phận nào khác trên cơ thể và dạng nào phổ biến nhất?",
+    "ground_truth": "Căn bệnh này có thể bắt gặp ở mọi bộ phận, cơ quan của cơ thể ví dụ như bệnh lao màng phổi, chứng lao hạch bạch huyết, bệnh lao màng não hay lao màng bụng. Trong số đó, chứng bệnh lao phổi có tỷ lệ xuất hiện phổ biến nhất và cũng là nguồn gốc lây bệnh chính."
+  },
+  {
+    "question": "Bệnh lao phổi là gì và nó lây lan qua đường nào?",
+    "ground_truth": "Bệnh lao phổi là một bệnh nhiễm trùng do vi khuẩn lao Mycobacterium tuberculosis (MTB) gây ra. Vi khuẩn lao thường tấn công vào phổi, nhưng cũng có thể ảnh hưởng đến các cơ quan khác trong cơ thể như não, xương, thận và tim. Vi khuẩn lao có khả năng lây lan qua không khí thông qua giọt bắn khi người bệnh ho hoặc hắt hơi."
+  },
+  {
+    "question": "Các triệu chứng của bệnh lao phổi đang hoạt động ở người lớn và trẻ em khác nhau như thế nào?",
+    "ground_truth": "Ở giai đoạn lao đang hoạt động, các triệu chứng ở người lớn thường bao gồm: ho kéo dài hơn 3 tuần, ho ra máu hoặc chất nhầy, viêm họng, sưng và đau họng, đau ngực, khó thở, sốt về chiều tối, mệt mỏi, ớn lạnh, ra mồ hôi đêm, chán ăn, sụt cân. Đối với trẻ em, các triệu chứng theo độ tuổi có thể khác nhau: thanh thiếu niên có triệu chứng tương tự người lớn; trẻ em từ 1 – 12 tuổi có thể bị sốt kéo dài và sụt cân; trẻ sơ sinh có thể không phát triển, ăn kém, phản xạ kém, nôn mửa không tăng cân như mong đợi."
+  },
+  {
+    "question": "Khi điều trị bệnh lao phổi tại nhà, cần lưu ý những biện pháp cách ly nào để tránh lây nhiễm cho người khác?",
+    "ground_truth": "Khi điều trị bệnh lao phổi tại nhà, người bệnh nên ở một phòng riêng, có thể sử dụng phòng tắm riêng nếu có. Không dùng chung vật dụng cá nhân như chén đĩa, nồi, đồ dùng vệ sinh cá nhân, khăn tay. Người bệnh nên đeo khẩu trang khi tiếp xúc với mọi người và hạn chế tiếp xúc với thành viên khác trong gia đình, đặc biệt với người già, trẻ em và những người có hệ miễn dịch yếu. Ngoài ra, cần đảm bảo rằng phòng người bệnh có hệ thống thông gió tốt."
+  },
+  {
+    "question": "Tôi bị ho đã lâu và có sốt nhẹ về chiều, liệu có phải là dấu hiệu của bệnh lao phổi không?",
+    "ground_truth": "Nếu bạn bị ho trên ba tuần không phải do viêm phổi, viêm phế quản, giãn phế quản, ung thư phổi mà dùng thuốc kháng sinh không khỏi, thì cần nghĩ tới bệnh lao. Sốt nhẹ về chiều cũng là một triệu chứng thường gặp của người lao phổi. Nếu có các triệu chứng như ho, khạc đờm, ho ra máu kèm theo sốt, bạn cần đến khám và xét nghiệm lao phổi càng sớm càng tốt."
+  },
+  {
+    "question": "Bệnh lao phổi lây qua đường nào và có phải là bệnh di truyền không?",
+    "ground_truth": "Bệnh lao phổi do vi khuẩn MTB (Mycobacterim tuberculosis) gây ra và lan truyền từ người này sang người khác qua đường hô hấp. Bệnh không có tính di truyền. Ngoài ra, việc tiếp xúc với người mắc bệnh lao hoặc các loại chất thải chứa vi khuẩn lao, cũng như sử dụng thực phẩm hoặc ăn vật nuôi nhiễm lao cũng có thể khiến bạn bị nhiễm bệnh."
+  },
+  {
+    "question": "Bệnh lao phổi có chữa khỏi được không và chi phí điều trị có tốn kém không?",
+    "ground_truth": "Bệnh lao phổi hiện nay đã được chữa khỏi hoàn toàn với những tiến bộ của y học hiện đại. Bệnh lao được coi là bệnh xã hội nên được điều trị miễn phí ở khắp các bệnh viện chuyên khoa từ trung ương tới cơ sở."
+  },
+  {
+    "question": "Bệnh lao phổi do nguyên nhân gì gây ra và thường xuất hiện ở vị trí nào trong phổi ạ?",
+    "ground_truth": "Bệnh lao phổi chủ yếu do vi khuẩn lao người (M. tuberculosis hominis) gây ra; đôi khi có thể do vi khuẩn lao bò nhưng ít gặp. Nguồn gốc của vi khuẩn lao có thể do tái nhiễm từ môi trường bên ngoài hoặc tái hoạt động từ tổn thương cũ. Lao phổi thường bắt đầu từ vùng đỉnh phổi và vùng dưới đòn (phân thùy đỉnh và phân thùy sau của thùy trên phổi)."
+  },
+  {
+    "question": "Những dấu hiệu hay triệu chứng nào thường gặp ở người mắc bệnh lao phổi, đặc biệt là những triệu chứng xuất hiện từ từ?",
+    "ground_truth": "Đa số các trường hợp bệnh lao phổi bắt đầu từ từ với các triệu chứng toàn thân như mệt mỏi, ăn kém, gầy sút cân không rõ nguyên nhân, sốt nhẹ về chiều tối (37,5°C đến 38°C) kèm theo ra mồ hôi về ban đêm. Triệu chứng cơ năng hay gặp nhất là ho khạc đờm (đờm trắng trong, nhầy, có thể màu vàng nhạt, xanh hoặc mủ đặc). Tất cả những người bệnh có dấu hiệu ho khạc đờm từ trên 2 tuần cần được khám phát hiện hoặc loại trừ lao. Ngoài ra, có thể gặp ho ra máu (thường số lượng ít nhưng cần coi là cấp cứu), đau mỏi vùng liên bả cột sống hoặc đau ngực (không thường xuyên), và khó thở (chỉ khi tổn thương rộng hoặc có biến chứng)."
+  },
+  {
+    "question": "Những đối tượng nào có nguy cơ cao mắc bệnh lao phổi, ngoài người trưởng thành nói chung?",
+    "ground_truth": "Ngoài người trưởng thành, lao phổi hay gặp ở trẻ nhỏ (đặc biệt dưới 5 tuổi) và người già. Nam giới cũng có tỷ lệ mắc cao hơn nữ. Các yếu tố thuận lợi khác bao gồm người nhiễm HIV, người tiếp xúc trực tiếp với nguồn lây (nhất là trẻ em trong hộ gia đình), người mắc các bệnh mạn tính như đái tháo đường, suy thận mạn, người nghiện ma túy, rượu, thuốc lá, thuốc lào, và người sử dụng các thuốc ức chế miễn dịch kéo dài như corticoid, hóa chất điều trị ung thư, các thuốc độc tế bào, các thuốc sinh học."
+  },
+  {
+    "question": "Bệnh lao phổi hoạt động có những triệu chứng điển hình nào để tôi có thể nhận biết?",
+    "ground_truth": "Khi bệnh lao phổi ở giai đoạn hoạt động, người bệnh bắt đầu có các dấu hiệu rõ ràng như: Ho kéo dài hơn 3 tuần, có thể có đờm hoặc lẫn máu; Suy nhược, sụt cân, chán ăn, sốt nhẹ vào buổi chiều; Khó thở, đau ngực dai dẳng; Đổ mồ hôi nhiều về đêm. Ở trẻ nhỏ, có thể thấy chậm lớn và mệt mỏi kéo dài."
+  },
+  {
+    "question": "Bệnh lao phổi do nguyên nhân gì gây ra và liệu người bị lao tiềm ẩn có lây bệnh cho người khác không?",
+    "ground_truth": "Bệnh lao phổi do vi khuẩn lao (Mycobacterium tuberculosis) gây ra. Người mang lao tiềm ẩn không biểu hiện triệu chứng và không lây bệnh cho người khác."
+  },
+  {
+    "question": "Việc điều trị bệnh lao phổi thường diễn ra trong bao lâu và bao gồm những giai đoạn nào?",
+    "ground_truth": "Thời gian điều trị bệnh lao phổi thường kéo dài từ 6 đến 9 tháng, tùy vào mức độ bệnh và đáp ứng của người bệnh với thuốc. Phác đồ điều trị được thiết kế theo hai giai đoạn rõ rệt: Giai đoạn tấn công (2 tháng đầu) sử dụng phối hợp nhiều loại thuốc kháng lao mạnh để ức chế và tiêu diệt phần lớn vi khuẩn, và Giai đoạn duy trì (4 - 7 tháng tiếp theo) duy trì điều trị với ít loại thuốc hơn nhằm loại bỏ nốt phần vi khuẩn còn lại và ngăn chặn khả năng tái nhiễm."
+  },
+  {
+    "question": "Bệnh lao phổi là gì và nó lây lan sang người khác bằng cách nào?",
+    "ground_truth": "Lao phổi là một dạng bệnh nhiễm trùng hô hấp gây tổn thương nghiêm trọng chủ yếu ở phổi và có thể ảnh hưởng đến một số bộ phận khác như: tim, gan, thận,... khi vi khuẩn đi vào trong máu tới những cơ quan khác. Bệnh lao phổi không có khả năng di truyền nhưng tốc độ lây truyền giữa người với người cao. Bệnh có thể lây lan khi người bệnh ho, hắt hơi, nói chuyện,... Điều này có thể phát tán nước bọt chứa vi khuẩn lao vào không khí. Sau đó, một người khác có thể hít những vi khuẩn này vào phổi và nguy cơ mắc bệnh là rất lớn."
+  },
+  {
+    "question": "Khi bệnh lao phổi đã hoạt động, những triệu chứng thường gặp là gì?",
+    "ground_truth": "Khi bệnh lao phổi đang hoạt động, các triệu chứng thường bắt đầu dần dần và trầm trọng hơn sau vài tuần. Chúng có thể bao gồm: Ho, ho ra máu hoặc chất nhầy, đau ngực, đau khi thở hoặc ho, sốt, ớn lạnh, đổ mồ hôi đêm, giảm cân không rõ lý do, chán ăn, mất khẩu vị và mệt mỏi. Nếu nhiễm trùng lao lây lan từ phổi đến các bộ phận khác của cơ thể (bệnh lao ngoài phổi), các triệu chứng phổ biến có thể bao gồm: Sốt, ớn lạnh, đổ mồ hôi đêm, giảm cân, chán ăn, mất khẩu vị và mệt mỏi."
+  },
+  {
+    "question": "Những đối tượng nào có nguy cơ cao mắc bệnh lao phổi và làm thế nào để chẩn đoán bệnh này?",
+    "ground_truth": "Bất kì ai cũng có nguy cơ mắc bệnh lao phổi, nhưng những người nhiễm HIV/AIDS và những người khác có hệ miễn dịch yếu có nguy cơ mắc bệnh lao cao hơn. Bệnh lao cũng lây lan dễ dàng ở những nơi người tập trung đông người hoặc nơi có người sống trong điều kiện đông đúc. Để chẩn đoán bệnh lao phổi, bác sĩ có thể dựa trên những biểu hiện lâm sàng như nghe phổi, kiểm tra các hạch bạch huyết xem có sưng không, các triệu chứng ho tức ngực, mệt mỏi. Để chắc chắn, người bệnh có thể cần dùng tới xét nghiệm Mantoux (xét nghiệm da tuberculin Mantoux), trong đó bác sĩ sẽ tiêm một lượng nhỏ chất lỏng vào vùng da dưới cánh tay của người bệnh."
+  },
+  {
+    "question": "Bệnh lao phổi là bệnh gì và do vi khuẩn nào gây ra?",
+    "ground_truth": "Bệnh lao phổi (Pulmonary Tuberculosis) là bệnh truyền nhiễm qua đường hô hấp, xảy ra khi vi khuẩn M.Tuberculosis tấn công chủ yếu vào phổi. Bệnh dễ gây ra nhiều biến chứng nguy hiểm tới sức khỏe và tính mạng của bệnh nhân."
+  },
+  {
+    "question": "Các triệu chứng thường gặp của bệnh lao phổi là gì?",
+    "ground_truth": "Các dấu hiệu thường đặc hiệu biểu hiện qua đường hô hấp như: Ho khan, ho ít, ho khạc đờm (thường có màu trắng), ho ra máu (đờm lẫn máu) với số lượng từ ít tới nhiều. Nếu bệnh nhân có ho khan kéo dài, sốt nhẹ trên 3 tuần (có thể sốt về chiều) và thường hay có triệu chứng khó thở."
+  },
+  {
+    "question": "Bệnh lao phổi lây truyền qua đường nào và nguồn bệnh chủ yếu là từ đâu?",
+    "ground_truth": "Bệnh lao phổi lây lan qua không khí. Nguồn bệnh chủ yếu là người hoặc động vật mắc vi khuẩn lao. Bệnh dễ lây truyền khi người hoặc động vật nhiễm bệnh ho, hắt hơi tạo ra những hạt nước bọt rất nhỏ chứa nhiều vi khuẩn lao lơ lửng trong không khí."
+  },
+  {
+    "question": "Bệnh lao phổi hoạt động thường có những triệu chứng gì để nhận biết?",
+    "ground_truth": "Bệnh lao phổi hoạt động thường có các triệu chứng bắt đầu từ từ và nặng hơn sau vài tuần, bao gồm: ho nặng (kéo dài hơn hai tuần), ho ra máu hoặc ho có đờm, đau ngực, đau khi thở hoặc ho, sốt, ớn lạnh, đổ mồ hôi đêm, giảm cân, chán ăn và mệt mỏi."
+  },
+  {
+    "question": "Bệnh lao phổi lây lan qua những con đường nào và có những cách nào mà bệnh không lây truyền?",
+    "ground_truth": "Bệnh lao phổi lây lan từ người này sang người khác qua không khí. Khi người mắc bệnh lao phổi (ở giai đoạn hoạt động hoặc lao thanh quản) ho, hắt xì, nói hoặc hát, vi khuẩn lao có thể bay vào không khí và những người ở gần có thể hít phải. Bệnh không lây truyền qua bắt tay, dùng chung thức ăn hoặc đồ uống, chạm vào khăn trải giường hoặc bệ toilet, dùng chung bàn chải đánh răng, hay hôn nhau. Vi khuẩn lao cũng không thể lây truyền nếu người bệnh ở giai đoạn tiềm ẩn hoặc mắc bệnh lao ở các bộ phận khác của cơ thể như thận hoặc cột sống."
+  },
+  {
+    "question": "Bệnh lao phổi có nguy hiểm không và nó có thể gây tổn thương đến những bộ phận nào khác ngoài phổi?",
+    "ground_truth": "Bệnh lao phổi thuộc nhóm những bệnh truyền nhiễm nguy hiểm. Ngoài việc gây tổn thương ở nhu mô phổi, vi khuẩn lao còn có thể tấn công nhiều cơ quan khác trên cơ thể như lao màng não, lao xương, lao ruột, lao hạch và lao màng bụng."
+  },
+  {
+    "question": "Tôi cần chú ý đến những triệu chứng nào để phát hiện sớm bệnh lao phổi?",
+    "ground_truth": "Bạn cần chú ý đến những cơn ho kéo dài, sốt nhẹ về chiều hoặc sụt cân bất thường. Đây là những dấu hiệu không nên chủ quan và cần đi khám ngay."
+  },
+  {
+    "question": "Nguyên nhân trực tiếp gây bệnh lao phổi là gì và những yếu tố nào làm tăng nguy cơ mắc bệnh?",
+    "ground_truth": "Nguyên nhân trực tiếp gây bệnh lao phổi là trực khuẩn lao có tên là Mycobacterium tuberculosis. Các yếu tố thuận lợi làm suy yếu hàng rào bảo vệ của cơ thể, tạo cơ hội cho vi khuẩn bùng phát bao gồm: yếu tố gen (ảnh hưởng đến khả năng đáp ứng miễn dịch), không có thói quen đeo khẩu trang khi đến những nơi đông người, làm việc quá sức, uống rượu bia, hút thuốc lá, thuốc lào và thức khuya, thiếu ngủ."
+  },
+  {
+    "question": "Bệnh lao phổi lây truyền như thế nào và tôi có thể làm gì để giảm nguy cơ lây nhiễm?",
+    "ground_truth": "Bệnh lao phổi lây truyền chủ yếu qua đường hô hấp. Khi người bệnh lao phổi (thể lao hoạt động) ho, hắt hơi, nói chuyện to hoặc khạc nhổ, họ sẽ bắn ra môi trường hàng nghìn hạt nước bọt nhỏ li ti có chứa vi khuẩn lao. Người khỏe mạnh hít phải các hạt này vào phổi sẽ có nguy cơ bị nhiễm bệnh. Để giảm nguy cơ, bạn nên đeo khẩu trang khi đến nơi đông người, bệnh viện hoặc khi tiếp xúc với người có biểu hiện ho khạc đờm, tránh làm việc quá sức, hạn chế uống rượu bia, bỏ hút thuốc lá, thuốc lào và ngủ đủ giấc để tăng cường hệ miễn dịch."
+  },
+  {
+    "question": "Bệnh lao phổi là gì và nó lây lan qua đường nào?",
+    "ground_truth": "Bệnh lao phổi là bệnh lý viêm nhiễm nhu mô phổi do trực khuẩn lao gây ra. Bệnh có thể lây lan từ người này sang người khác qua đường hô hấp."
+  },
+  {
+    "question": "Những triệu chứng nào thường gặp khi mắc bệnh lao phổi?",
+    "ground_truth": "Các triệu chứng của bệnh lao phổi bao gồm: ho kéo dài (ho khan hoặc khạc đờm trắng), ho khạc đờm lẫn máu hay ho khạc nhiều máu (là triệu chứng dễ nhận biết nhất), sốt nhẹ về chiều, người bị gầy đi, sút cân nhiều, ra mồ hôi trộm ban đêm, đau ngực, khó thở và cảm thấy mệt mỏi."
+  },
+  {
+    "question": "Nguyên nhân chính gây ra bệnh lao phổi là gì và những yếu tố nào làm tăng nguy cơ mắc bệnh?",
+    "ground_truth": "Tác nhân chính gây bệnh lao phổi là do vi khuẩn Mycobacterium tuberculosis xâm nhập vào phổi. Các nguyên nhân và yếu tố làm tăng nguy cơ mắc bệnh bao gồm: hệ miễn dịch bị suy yếu (như người mắc HIV, bệnh tiểu đường, cơ thể suy nhược), hít phải vùng không khí nhiễm khuẩn, thường xuyên tiếp xúc với môi trường bị ô nhiễm (nhiều khói bụi, ẩm ướt, nhiều khí uế) và thường xuyên tiếp xúc với người bệnh."
+  },
+  {
+    "question": "Những triệu chứng phổ biến của bệnh lao phổi giai đoạn cuối là gì?",
+    "ground_truth": "Khi mắc bệnh lao phổi giai đoạn cuối (giai đoạn hoạt động), người bệnh có thể có các triệu chứng toàn thân như mệt mỏi, chán ăn, ăn không ngon miệng, sụt cân (đây là triệu chứng quan trọng gợi ý bệnh lao). Người bệnh cũng có thể sốt nhẹ và vừa, thường vào buổi chiều tối, kèm toát mồ hôi vào ban đêm khi hạ sốt. Ho là triệu chứng thường gặp nhất, kéo dài dai dẳng, có lẫn dịch đờm, không hết dù dùng thuốc ho hay kháng sinh, thậm chí có thể ho ra máu. Đau tức ngực cũng phổ biến, có thể đau âm ỉ hay nhói. Khó thở ít xảy ra, trừ khi lao phổi lan rộng nhiều thùy phổi và có biến chứng tại phổi như tràn dịch, tràn khí màng phổi. Nếu bệnh lao lan sang các cơ quan khác, người bệnh có thể bị nổi hạch, đau nhức xương khớp, tổn thương lao trên da, đau đầu."
+  },
+  {
+    "question": "Bệnh lao phổi giai đoạn cuối được định nghĩa như thế nào và nó có phổ biến ở Việt Nam không?",
+    "ground_truth": "Lao phổi giai đoạn cuối hay còn gọi là lao phổi giai đoạn hoạt động là giai đoạn bệnh lao bùng phát, có thể gây nên những biến chứng nghiêm trọng và gây tổn thương phổi. Hiện nay, bệnh lao rất phổ biến tại Việt Nam. Theo Tổ chức Y tế Thế giới, Việt Nam là nước có tỷ lệ bệnh lao và lao kháng thuốc đứng hàng thứ 11 trên toàn thế giới."
+  },
+  {
+    "question": "Làm thế nào để phân biệt giai đoạn lao tiềm ẩn với giai đoạn lao phổi hoạt động (giai đoạn cuối)?",
+    "ground_truth": "Trong giai đoạn lao tiềm ẩn, hệ miễn dịch của cơ thể cố gắng kiểm soát vi khuẩn lao đã xâm nhập nhưng không thể tiêu diệt hoàn toàn, vi khuẩn ngủ yên trong cơ thể và người bệnh hoàn toàn khỏe mạnh, không có triệu chứng bất thường. Ngược lại, giai đoạn lao phổi hoạt động (giai đoạn cuối) là khi cơ thể không còn khống chế được vi khuẩn lao tiềm ẩn, bệnh bùng phát nghiêm trọng, gây tổn thương phổi và người bệnh sẽ có các triệu chứng như mệt mỏi, sụt cân, sốt, ho kéo dài, đau tức ngực, và có thể có biến chứng."
+  },
+  {
+    "question": "Bệnh lao phổi là gì và nguyên nhân gây ra bệnh là gì?",
+    "ground_truth": "Bệnh lao phổi xảy ra khi vi khuẩn Mycobacterium tuberculosis (M. tuberculosis) trực tiếp tấn công phổi và phá hủy các mô tế bào của cơ quan này. Bệnh lao nói chung do vi khuẩn lao gây ra, trong đó lao phổi là dạng phổ biến nhất, chiếm 80 – 85% tổng số ca bệnh."
+  },
+  {
+    "question": "Tôi cần chú ý đến những triệu chứng nào của bệnh lao phổi?",
+    "ground_truth": "Các dấu hiệu và triệu chứng lao phổi thường gặp bao gồm ho dữ dội, dai dẳng ít nhất ba tuần; cảm giác đau thắt ngực; ho ra máu hoặc có đờm trong phổi; khó thở. Ngoài ra, người bệnh cũng có thể gặp phải biểu hiện sụt cân ngoài ý muốn."
+  },
+  {
+    "question": "Sau khi nhiễm vi khuẩn lao, bệnh có thể phát triển qua những giai đoạn nào?",
+    "ground_truth": "Sau khi xâm nhập cơ thể, vi khuẩn lao không phải lúc nào cũng lập tức gây bệnh. Tình trạng nhiễm khuẩn lao thường được chia thành hai giai đoạn: Bệnh lao tiềm ẩn, khi người khỏe mạnh mang mầm bệnh nhưng không xuất hiện triệu chứng do hệ miễn dịch đủ mạnh để kìm chế vi khuẩn; và Bệnh lao phổi hoạt động, khi 5 – 10% người nhiễm khuẩn M. tuberculosis sẽ bị bệnh nếu không được phát hiện và chữa trị kịp thời, với 50% trong số này phát bệnh sau 2 – 5 năm kể từ thời điểm nhiễm trùng."
+  }
+]
