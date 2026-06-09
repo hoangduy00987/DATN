@@ -149,7 +149,11 @@ export async function middleware(request: NextRequest) {
     }
     if (doctorChatOk) {
       const url = request.nextUrl.clone();
-      url.pathname = CHAT_PATH;
+      if (role === "admin") {
+        url.pathname = "/chat/statistics";
+      } else {
+        url.pathname = CHAT_PATH;
+      }
       return patch(NextResponse.redirect(url));
     }
     if (role === "patient") {
@@ -200,12 +204,23 @@ export async function middleware(request: NextRequest) {
     }
 
     if (!doctorChatOk) {
+      if (role === "admin") {
+        const url = request.nextUrl.clone();
+        url.pathname = "/chat/statistics";
+        return patch(NextResponse.redirect(url));
+      }
       if (role === "patient") {
         const url = request.nextUrl.clone();
         url.pathname = PATIENT_HOME;
         return patch(NextResponse.redirect(url));
       }
       return patch(redirectToLogin(request, "forbidden"));
+    }
+
+    if (pathname === CHAT_PATH && role === "admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/chat/statistics";
+      return patch(NextResponse.redirect(url));
     }
 
     return patch(NextResponse.next());

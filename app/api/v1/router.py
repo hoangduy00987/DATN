@@ -34,6 +34,7 @@ from app.api.v1.appointments import router as appointments_router
 from app.api.v1.users import router as users_router
 from app.api.v1.notifications import router as notifications_router
 from app.api.v1.reviews import router as reviews_router
+from app.api.v1.statistics import router as statistics_router
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -45,3 +46,4 @@ api_router.include_router(appointments_router, prefix="/appointments", tags=["ap
 api_router.include_router(users_router, prefix="/users", tags=["users"])
 api_router.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
 api_router.include_router(reviews_router, prefix="/reviews", tags=["reviews"])
+api_router.include_router(statistics_router, prefix="/statistics", tags=["statistics"])

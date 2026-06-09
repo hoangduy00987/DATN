@@ -43,10 +43,26 @@ def create_refresh_token(data: dict, expires_delta: timedelta | None = None):
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+def create_reset_token(email: str, password_hash: str):
+    expire = datetime.utcnow() + timedelta(minutes=15)
+    # Dùng 10 ký tự cuối của password_hash làm fingerprint để link chỉ dùng được 1 lần
+    pwh_fingerprint = password_hash[-10:]
+    to_encode = {"sub": email, "exp": expire, "type": "reset", "pwh": pwh_fingerprint}
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def verify_reset_token(token: str) -> dict | None:
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("type") != "reset":
+            return None
+        return payload
+    except JWTError:
+        return None
+
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=401,
-        detail="Could not validate credentials",
+        detail="Không thể xác thực thông tin đăng nhập.",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -69,5 +85,5 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
 def get_current_doctor(current_user: User = Depends(get_current_user)):
     if current_user.role != RoleEnum.doctor:
-        raise HTTPException(status_code=403, detail="The user doesn't have enough privileges (Doctor required).")
+        raise HTTPException(status_code=403, detail="Tài khoản không có đủ quyền (Yêu cầu quyền Bác sĩ).")
     return current_user

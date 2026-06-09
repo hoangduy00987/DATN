@@ -227,9 +227,9 @@ export default function LoginPage() {
                                 className="title"
                                 style={{ marginLeft: isLogin ? "0%" : "-50%" }}
                             >
-                                Login Form
+                                Đăng nhập
                             </div>
-                            <div className="title">Signup Form</div>
+                            <div className="title">Đăng ký</div>
                         </div>
 
                         <div className="form-container">
@@ -242,13 +242,13 @@ export default function LoginPage() {
                                     className={`slide-btn${isLogin ? " active" : ""}`}
                                     onClick={() => setActiveTab("login")}
                                 >
-                                    Login
+                                    Đăng nhập
                                 </button>
                                 <button
                                     className={`slide-btn${!isLogin ? " active" : ""}`}
                                     onClick={() => setActiveTab("signup")}
                                 >
-                                    Signup
+                                    Đăng ký
                                 </button>
                             </div>
 
@@ -262,7 +262,7 @@ export default function LoginPage() {
                                     <div className="field">
                                         <input
                                             type="email"
-                                            placeholder="Email Address"
+                                            placeholder="Tên đăng nhập (Email)"
                                             value={loginEmail}
                                             onChange={e => setLoginEmail(e.target.value)}
                                             required
@@ -271,7 +271,7 @@ export default function LoginPage() {
                                     <div className="field">
                                         <input
                                             type="password"
-                                            placeholder="Password"
+                                            placeholder="Mật khẩu"
                                             value={loginPassword}
                                             onChange={e => setLoginPassword(e.target.value)}
                                             required
@@ -283,19 +283,19 @@ export default function LoginPage() {
                                     )}
 
                                     <div className="pass-link">
-                                        <a href="#">Forgot password?</a>
+                                        <Link href="/forgot-password">Quên mật khẩu?</Link>
                                     </div>
 
                                     <div className="btn-field">
                                         <div className="btn-layer" />
                                         <button type="submit" disabled={loginLoading}>
-                                            {loginLoading ? "Đang xử lý..." : "Login"}
+                                            {loginLoading ? "Đang xử lý..." : "Đăng nhập"}
                                         </button>
                                     </div>
 
                                     <div className="signup-link">
-                                        Not a member?{" "}
-                                        <a onClick={() => setActiveTab("signup")}>Signup now</a>
+                                        Chưa có tài khoản?{" "}
+                                        <a onClick={() => setActiveTab("signup")}>Đăng ký ngay</a>
                                     </div>
                                 </form>
 
@@ -304,7 +304,7 @@ export default function LoginPage() {
                                     <div className="field">
                                         <input
                                             type="email"
-                                            placeholder="Email Address"
+                                            placeholder="Tên đăng nhập (Email)"
                                             value={signupEmail}
                                             onChange={e => setSignupEmail(e.target.value)}
                                             required
@@ -313,7 +313,7 @@ export default function LoginPage() {
                                     <div className="field">
                                         <input
                                             type="password"
-                                            placeholder="Password"
+                                            placeholder="Mật khẩu"
                                             value={signupPassword}
                                             onChange={e => setSignupPassword(e.target.value)}
                                             required
@@ -322,7 +322,7 @@ export default function LoginPage() {
                                     <div className="field">
                                         <input
                                             type="password"
-                                            placeholder="Confirm password"
+                                            placeholder="Xác nhận mật khẩu"
                                             value={signupConfirm}
                                             onChange={e => setSignupConfirm(e.target.value)}
                                             required
@@ -339,7 +339,7 @@ export default function LoginPage() {
                                     <div className="btn-field">
                                         <div className="btn-layer" />
                                         <button type="submit" disabled={signupLoading}>
-                                            {signupLoading ? "Đang xử lý..." : "Signup"}
+                                            {signupLoading ? "Đang xử lý..." : "Đăng ký"}
                                         </button>
                                     </div>
                                 </form>

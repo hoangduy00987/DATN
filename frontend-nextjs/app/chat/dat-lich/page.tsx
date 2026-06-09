@@ -256,7 +256,8 @@ export default function DatLichPage() {
                   name="doctorId"
                   value={doctorId}
                   onChange={(e) => setDoctorId(e.target.value)}
-                  className={formErrors.doctorId ? "error" : ""}
+                  onBlur={() => handleBlur("doctorId")}
+                  className={touched.doctorId && formErrors.doctorId ? "error" : ""}
                 >
                   {!formData.appointmentDate && <option value="">Vui lòng chọn ngày khám trước</option>}
                   {formData.appointmentDate && availableDoctors.length === 0 && !loadingDoctors && (
@@ -266,7 +267,7 @@ export default function DatLichPage() {
                     <option key={doc.id} value={doc.id}>Bác sĩ: {doc.full_name}</option>
                   ))}
                 </select>
-                {formErrors.doctorId && <span className="error-msg">{formErrors.doctorId}</span>}
+                {touched.doctorId && formErrors.doctorId && <span className="error-msg">{formErrors.doctorId}</span>}
               </div>
 
               <div className="form-group full-width">

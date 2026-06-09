@@ -22,5 +22,15 @@ class Config:
     XRAY_CHECK_MODEL_PATH = os.getenv("XRAY_CHECK_MODEL_PATH", "")
     DETECTION_CONFIDENCE_THRESHOLD = float(os.getenv("DETECTION_CONFIDENCE_THRESHOLD", "0.5"))
 
+    # SMTP Configuration for Email
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+    MAIL_FROM = os.getenv("MAIL_FROM")
+    MAIL_PORT = int(os.getenv("MAIL_PORT", "587"))
+    MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.gmail.com")
+    MAIL_FROM_NAME = os.getenv("MAIL_FROM_NAME", "Lung System")
+
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 
 settings = Config()

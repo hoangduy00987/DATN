@@ -105,12 +105,12 @@ app.add_middleware(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
-    """Xử lý lỗi validation một cách an toàn, tránh UnicodeDecodeError với dữ liệu nhị phân."""
+    """Xử lý lỗi validation và trả về thông báo Tiếng Việt."""
     logging.error(f"Validation error: {exc}")
     return JSONResponse(
         status_code=422,
         content={
-            "detail": "Dữ liệu yêu cầu không hợp lệ. Vui lòng kiểm tra lại định dạng file hoặc các trường dữ liệu.",
+            "detail": "Dữ liệu yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin gửi lên.",
             "error_type": "RequestValidationError",
         },
     )
@@ -123,7 +123,7 @@ app.include_router(api_router)
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the FastAPI RAG Chatbot!"}
+    return {"message": "Chào mừng bạn đến với LungCare API!"}
 
 
 if __name__ == "__main__":
