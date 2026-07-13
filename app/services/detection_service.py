@@ -110,7 +110,7 @@ class DetectionModel(BaseModel):
     """Cascade-capable detection model wrapper."""
 
     def __init__(self, model_path: str = ""):
-        super().__init__(model_path, "best_densenet201_v2_0.89_512.keras")
+        super().__init__(model_path, "model.keras")
         self.img_size = 224  # IMAGE_SIZE=224, 512 is NB_FEATURES
 
     def _run_model_predict(self, model, img_arr: np.ndarray) -> Tuple[str, float]:

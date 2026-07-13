@@ -5,7 +5,7 @@ from app.db.chroma_client import load_db
 from app.services.embedding_service import get_embedding
 from app.core.config import settings
 
-def rerank_documents(query: str, docs: list[dict], top_n: int = 5) -> list[dict]:
+def rerank_documents(query: str, docs: list[dict], top_n: int = 10) -> list[dict]:
     """
     Rerank retrieved documents using Cohere's Multilingual Reranker API.
     Handles 429 Rate Limits automatically with exponential backoff.
@@ -85,7 +85,7 @@ def rerank_documents(query: str, docs: list[dict], top_n: int = 5) -> list[dict]
     return docs[:top_n]
 
 
-def retrieve(collection, query: str, top_k: int = 30, top_n: int = 5):
+def retrieve(collection, query: str, top_k: int = 50, top_n: int = 10):
     """
     Retrieve candidate documents from ChromaDB and rerank them using Cohere.
     """
